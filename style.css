@@ -84,6 +84,16 @@ h3 {
   padding: 20px;
 }
 
+.js .jsMensagem {
+  display: none;
+}
+
+.js .jsMensagem.ativo{
+  display: block;
+  color: red;
+  text-align: center;
+}
+
 .bold {
   font-weight: bolder;
 }
