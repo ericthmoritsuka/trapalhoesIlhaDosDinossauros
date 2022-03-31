@@ -1,19 +1,22 @@
-body{
+body {
   margin: 0px;
   padding: 0px;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: "Courier New", Courier, monospace;
   background-color: antiquewhite;
 }
-a, a:hover, a:focus, a:active{
+a,
+a:hover,
+a:focus,
+a:active {
   text-decoration: none;
   color: inherit;
 }
-ul{
+ul {
   list-style: none;
   margin: 0px;
   padding: 0px;
 }
-img{
+img {
   max-width: 90%;
   margin: 0 auto;
   height: auto;
@@ -21,7 +24,10 @@ img{
   border-radius: 10px;
   margin-top: 20px;
 }
-p, h1, h2, h3 {
+p,
+h1,
+h2,
+h3 {
   margin: 0px;
 }
 
@@ -33,24 +39,64 @@ p, h1, h2, h3 {
   padding: 10px;
 }
 
-.titulo{
+.titulo {
   color: #31302b;
   font-size: 3rem;
   text-align: center;
   margin-top: 20px;
 }
 
-@media(max-width: 800px){
-  .titulo{
+.inputNome {
+  display: none;
+}
+
+.inputNome.ativo {
+  padding: 40px;
+  display: grid;
+  justify-content: center;
+}
+
+.inputNome label {
+  text-align: center;
+  font-size: 2rem;
+  display: block;
+}
+.inputNome input {
+  text-align: center;
+  font-size: 2.5rem;
+  display: block;
+}
+
+.inputNome button {
+  font-size: 1.5rem;
+}
+
+.js .jsTexto {
+  display: none;
+}
+
+.js .jsTexto.ativo {
+  display: block;
+  font-size: 1.5rem;
+  text-align: center;
+  padding: 20px;
+}
+
+.bold {
+  font-weight: bolder;
+}
+
+@media (max-width: 800px) {
+  .titulo {
     font-size: 2rem;
   }
 }
 
-@media(max-width: 600px){
+@media (max-width: 600px) {
 }
 
-@media(max-width: 400px){
-  .titulo{
+@media (max-width: 400px) {
+  .titulo {
     font-size: 1.5rem;
   }
 }
