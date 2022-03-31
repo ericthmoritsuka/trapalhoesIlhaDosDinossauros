@@ -10,6 +10,7 @@ a:focus,
 a:active {
   text-decoration: none;
   color: inherit;
+  cursor: pointer;
 }
 ul {
   list-style: none;
@@ -32,6 +33,7 @@ h3 {
 }
 
 .bgPagina {
+  margin: 0 auto;
   display: block;
   max-width: 960px;
   margin-top: 50px;
