@@ -9,6 +9,35 @@
   padding: 20px;
 }
 
+.grid{
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+}
+
+.grid-item{
+  background-color: #FFF7ED;
+  border: 2px solid #65625e;
+  padding: 20px;
+  border-radius: 5px;
+}
+
+@media(max-width: 600px){
+  .grid{
+    grid-template-columns: 1fr;
+  }
+}
+
+.flex{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+  justify-content: center;
+}
+
 .texto {
   color: #31302b;
   font-size: 1rem;
@@ -19,11 +48,11 @@
 }
 
 .texto p {
-  font-size: 1rem;
+  font-size: 1.25rem;
 }
 
 .item {
-  background-color: white;
+  background-color: #FFF7ED;
   border-radius: 5px;
   font-size: 1.5rem;
   display: flex;
@@ -53,8 +82,8 @@
   color: #fff8db;
   padding: 10px 20px;
   border-radius: 10px;
-  max-width: fit-content;
   font-size: 1.5rem;
+  text-align: center;
 }
 
 .botao:hover{
