@@ -84,9 +84,19 @@
   border-radius: 10px;
   font-size: 1.5rem;
   text-align: center;
+  width: 100%;
+  display: block;
 }
 
 .botao:hover{
   background-color: #31302b;
   color: #fdffdb;
+}
+
+.js .jsImagem{
+  display: none;
+}
+
+.js .jsImagem.ativo{
+  display: block;
 }
