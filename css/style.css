@@ -1,6 +1,63 @@
-@import "./global.css";
-@import "./index.css";
-@import "./inicio.css";
-@import "./ataque.css";
-@import "./dado.css";
+@import './global.css';
 
+.bg {
+  margin: 0 auto;
+  display: block;
+  max-width: 960px;
+  margin-top: 50px;
+  background-color: #fff8db;
+  padding: 20px;
+}
+
+.texto {
+  color: #31302b;
+  font-size: 1rem;
+  text-align: center;
+  margin: 20px 0;
+  display: grid;
+  gap: 20px;
+}
+
+.texto p {
+  font-size: 1rem;
+}
+
+.item {
+  background-color: white;
+  border-radius: 5px;
+  font-size: 1.5rem;
+  display: flex;
+  gap: 10px;
+  align-items: end;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.imagem{
+  margin: 20px 0;
+  display: grid;
+  justify-content: center;
+}
+
+.caixaBotao{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin: 0 auto;
+  padding: 30px;
+  gap: 20px;
+}
+
+.botao{
+  background-color: #656257;
+  color: #fff8db;
+  padding: 10px 20px;
+  border-radius: 10px;
+  max-width: fit-content;
+  font-size: 1.5rem;
+}
+
+.botao:hover{
+  background-color: #31302b;
+  color: #fdffdb;
+}
