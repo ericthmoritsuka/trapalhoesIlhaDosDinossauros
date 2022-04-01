@@ -1,0 +1,42 @@
+.dado.um{
+  grid-column: 2;
+  background-image: url("../img/dado/1.svg");
+  width: 105px;
+  height: 100px;
+  margin: 20px;
+}
+.dado.dois{
+  grid-column: 2;
+  background-image: url("../img/dado/2.svg");
+  width: 105px;
+  height: 100px;
+  margin: 20px;
+}
+.dado.tres{
+  grid-column: 2;
+  background-image: url("../img/dado/3.svg");
+  width: 105px;
+  height: 100px;
+  margin: 20px;
+}
+.dado.quatro{
+  grid-column: 2;
+  background-image: url("../img/dado/4.svg");
+  width: 105px;
+  height: 100px;
+  margin: 20px;
+}
+.dado.cinco{
+  grid-column: 2;
+  background-image: url("../img/dado/5.svg");
+  width: 105px;
+  height: 100px;
+  margin: 20px;
+}
+.dado.seis{
+  grid-column: 2;
+  background-image: url("../img/dado/6.svg");
+  width: 105px;
+  height: 100px;
+  margin: 20px;
+}

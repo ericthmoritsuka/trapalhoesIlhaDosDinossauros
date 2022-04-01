@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./css/style.css">
   <title>As Aventuras dos Trapalhões: A ilha dos Dinossauros</title>
   <script>document.documentElement.className += ' js';</script>
 </head>
@@ -16,24 +16,24 @@
       <div class="titulo">
         <p>Vamos começar a jogar?</p>
       </div>
-      <div class="inputNome ativo">
-        <label for="nome">Qual o seu nome?</label>
-        <input type="text" id="nome">
-        <button type="button">Salvar</button>
+      <div class="ativo" id="nomeInput">
+        <label for="input">Qual o seu nome?</label>
+        <input type="text" id="input">
+        <button type="button" id="botaoInicio">Salvar</button>
       </div>
-      <div class="jsTexto">
+      <div class="" id="jsTextoInicio">
         <p>Olá! <span class="nomeDoJogador bold"></span>.
           Vamos começar nossa jornada. Você é o explorador <span class="bold">Didiana Jones</span> e vai embarcar nessa aventura RPG!</p>
       </div>
-      <h2 class="jsMensagem ativo">Digite um Nome e aperte em Salvar!</h2>
+      <h2 class="ativo" id="jsMensagemInicio">Digite um Nome e aperte em Salvar!</h2>
       <div class="imagem">
-        <a id="link" href=""><img src="./img/Didiana Jones.jpg" alt="Didiana Jones"></a>
+        <a id="linkInicio" href=""><img src="./img/Didiana Jones.jpg" alt="Didiana Jones"></a>
       </div>
     </div>
   </div>
 
 
-  <script src="./scriptInicio.js"></script>
+  <script src="./script.js"></script>
 </body>
 
 </html>
