@@ -77,9 +77,21 @@
   gap: 40px 0;
 }
 
+.link {
+  font-size: 1.5rem;
+  background-color: #31302a;
+  color: #FFF8DB;
+  border-radius: 5px;
+  padding: 5px 20px;
+}
+.link:hover{
+  background-color: #49483e;
+  color: #ccc9af;
+}
+
 .botao{
   background-color: #656257;
-  color: #fff8db;
+  color: #FFF8DB;
   padding: 10px 20px;
   border-radius: 10px;
   font-size: 1.5rem;
