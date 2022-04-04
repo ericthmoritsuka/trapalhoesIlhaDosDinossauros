@@ -89,6 +89,13 @@
   color: #ccc9af;
 }
 
+@media (max-width:600px){
+  .link{
+    font-size: 0.75rem;
+    padding: 5px 5px;
+  }
+}
+
 .botao{
   background-color: #656257;
   color: #FFF8DB;
