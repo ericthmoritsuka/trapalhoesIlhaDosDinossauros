@@ -312,7 +312,7 @@
   // --- seção: sortear ataque e energia (modo digital, página de criação) ---
   // cada poder é sorteado UMA vez só (nada de rolar de novo até sair um
   // número bom!); quando os dois saem, aparece o resumo e o Continuar
-  if (modoDigital && pagina === PAGINA_CRIACAO) {
+  if (modoDigital && (pagina === PAGINA_CRIACAO || pagina === 'inicio.html')) {
     var secCriacao = el('section', 'av-secao');
     secCriacao.appendChild(el('div', 'av-secao-titulo', '✨ Descubra seu poder'));
     secCriacao.appendChild(el('p', 'av-aviso', 'O dado gira, soma 6 e anota na ficha sozinho!'));
@@ -365,7 +365,10 @@
     secCriacao.appendChild(resumoCriacao);
     secCriacao.appendChild(continuarCriacao);
     conferirCriacao();
+    // no início, os poderes só aparecem depois da revelação da ficha
+    if (pagina === 'inicio.html') secCriacao.style.display = 'none';
     painel.appendChild(secCriacao);
+    tourAlvos.secCriacao = secCriacao;
   }
 
   // --- seção: penalidade da página (só no modo digital) ---
@@ -583,6 +586,9 @@
     var msgTreino = el('p', 'av-caflito-msg');
     secTreino.appendChild(msgTreino);
 
+    var explicadorDeRodada = null;
+    tourAlvos.explicarRodada = function (defineTexto) { explicadorDeRodada = defineTexto; };
+
     var botaoTreinarDeNovo = el('button', 'av-botao verde', '🥊 Treinar de novo!');
     botaoTreinarDeNovo.type = 'button';
     botaoTreinarDeNovo.style.display = 'none';
@@ -661,6 +667,22 @@
           msgTreino.textContent = '💢 A estátua ganhou a rodada! Você perde 1 coração (de treino).';
         } else {
           msgTreino.textContent = '😮 Empate! Ninguém perde pontos. Joguem de novo!';
+        }
+
+        // se o balão do tutorial está esperando, narra a rodada com os números
+        if (explicadorDeRodada) {
+          var narracao = 'Olha o que aconteceu: VOCÊ fez ' + valoresTreino.heroi + ' no dado + ' +
+            treinoAtaque + ' de ATAQUE = ' + somaHeroi + '. A ESTÁTUA fez ' + valoresTreino.inimigo +
+            ' + ' + INIMIGO_TREINO.ataque + ' = ' + somaInimigo + '. ';
+          if (somaHeroi > somaInimigo) {
+            narracao += 'Como ' + somaInimigo + ' é MENOR, a estátua perdeu 1 coração! Continue até ela ficar sem nenhum.';
+          } else if (somaInimigo > somaHeroi) {
+            narracao += 'Como ' + somaHeroi + ' é MENOR, você perdeu 1 coração (só de treino!). Revanche: jogue de novo!';
+          } else {
+            narracao += 'Empatou! Ninguém perde coração — é só jogar a rodada de novo.';
+          }
+          explicadorDeRodada(narracao);
+          explicadorDeRodada = null;
         }
         botaoTreino.disabled = false;
         atualizarTreino();
@@ -849,6 +871,9 @@
       passosEl.textContent = validos.length > 1 ? (i + 1) + ' de ' + validos.length : '';
       texto.textContent = passo.texto;
       botaoOk.textContent = i === validos.length - 1 ? 'Entendi! Vamos lá!' : 'Entendi!';
+      if (passo.aoMostrar) {
+        passo.aoMostrar(function (novoTexto) { texto.textContent = novoTexto; });
+      }
 
       if (alvoTexto) {
         alvoTexto.removeEventListener('input', aoDigitar);
@@ -992,6 +1017,17 @@
     });
   }
 
+  // passos do tour de criação: as explicações de ATAQUE e ENERGIA
+  // moram aqui nos balões, coladas nos botões de sortear
+  function passosCriacao() {
+    return [
+      { alvo: tourAlvos.ficha, texto: 'Essa é a sua ficha digital! Ela guarda seu nome, seu ATAQUE e sua ENERGIA durante a aventura inteira.', pular: function () { return !!localStorage.getItem(TOUR_FICHA); } },
+      { alvo: tourAlvos['sortear-ataque'], texto: 'Seu ATAQUE é a esperteza do seu herói: quanto MAIOR, melhor na luta! Clique aqui: o dado gira, soma 6 e anota sozinho.', esperarClique: true, pular: function () { return ficha.ataque !== null; } },
+      { alvo: tourAlvos['sortear-energia'], texto: 'Sua ENERGIA é o pique do herói: cada golpe de inimigo tira 1 ponto — e se chegar a ZERO, acabou a aventura! Clique pra sortear a sua.', esperarClique: true, pular: function () { return ficha.energia !== null; } },
+      { alvo: tourAlvos.ficha, texto: 'Herói pronto! Agora é só apertar o botão verde CONTINUAR A AVENTURA. Boa sorte!' }
+    ];
+  }
+
   /* ---------- botão flutuante ---------- */
 
   // no modo papel só chamamos atenção onde o dado é necessário
@@ -1060,10 +1096,14 @@
         { alvo: tourAlvos.ficha || painel, texto: 'Tcharam! ✨ Essa é a sua Ficha de Aventura digital! Ela vai ficar aqui do ladinho, guardando seu nome e seus poderes durante a jornada inteira.' },
         { alvo: tourAlvos.nome || painel, texto: 'Agora me conta: qual é o nome do seu herói? Escreva aqui nessa caixinha — pode ser o SEU nome!', esperarTexto: true, botaoPronto: 'Vamos lá!', textoPular: 'Não quero nome... Vou ser o Didiana Jones!', dica: '👆 Escreva o nome na caixinha brilhando!' }
       ], function () {
-        // com nome vai direto pros poderes; sem nome conhece o Didiana Jones
-        location.href = (ficha.nome || '').trim()
-          ? './criandoPersonagemAtaqueEnergia.html'
-          : './criandoPersonagemNome.html';
+        if ((ficha.nome || '').trim()) {
+          // com nome, os poderes são sorteados aqui mesmo: uma página a menos
+          if (tourAlvos.secCriacao) tourAlvos.secCriacao.style.display = '';
+          iniciarTour(TOUR_CRIACAO, passosCriacao());
+        } else {
+          // sem nome: vai conhecer o Didiana Jones
+          location.href = './criandoPersonagemNome.html';
+        }
       });
     });
   }
@@ -1082,17 +1122,12 @@
         { alvo: tourAlvos.treinoVs, texto: 'Hora de aprender a lutar TREINANDO! Essa é a Estátua Adoidada, um inimigo de mentirinha. Pode errar à vontade: sua energia de verdade não muda.' },
         { alvo: tourAlvos.treinoVs, texto: 'Cada lutador tem seu ATAQUE e seus corações de ENERGIA ❤️. Quem ficar sem corações primeiro perde o CAFLITO!' },
         { alvo: tourAlvos.treinoBotao, texto: 'Clique aqui pra jogar a rodada! Os dois dados giram, e cada lado soma o seu dado com o seu ATAQUE.', esperarClique: true },
-        { alvo: tourAlvos.treinoBotao, texto: 'Quem fez MENOS perde 1 coração (no empate ninguém perde). Continue jogando rodadas até derrotar a estátua — quando vencer, o botão da história vai piscar!' }
+        { alvo: tourAlvos.treinoBotao, texto: '🎲 Rolando os dados... Olha os números aparecendo embaixo de cada dado!', aoMostrar: tourAlvos.explicarRodada }
       ], function () {
         localStorage.setItem(TOUR_CAFLITO, '1');
       });
     } else if (pagina === PAGINA_CRIACAO) {
-      iniciarTour(TOUR_CRIACAO, [
-        { alvo: tourAlvos.ficha, texto: 'Essa é a sua ficha digital! Ela guarda seu nome, seu ATAQUE e sua ENERGIA durante a aventura inteira.', pular: function () { return !!localStorage.getItem(TOUR_FICHA); } },
-        { alvo: tourAlvos['sortear-ataque'], texto: 'Clique aqui pra descobrir o seu ATAQUE: o dado gira, soma 6 e anota na ficha sozinho!', esperarClique: true, pular: function () { return ficha.ataque !== null; } },
-        { alvo: tourAlvos['sortear-energia'], texto: 'Boa! Agora clique aqui pra descobrir a sua ENERGIA. Cada poder é sorteado uma vez só!', esperarClique: true, pular: function () { return ficha.energia !== null; } },
-        { alvo: tourAlvos.ficha, texto: 'Herói pronto! Quando os dois números aparecerem na ficha, é só apertar o botão verde CONTINUAR A AVENTURA.' }
-      ]);
+      iniciarTour(TOUR_CRIACAO, passosCriacao());
     } else if (penalidadeDaPagina) {
       iniciarTour(TOUR_PENALIDADE, [
         { alvo: tourAlvos.penalidade, texto: 'Ui, seu herói levou um golpe! Quando isso acontecer, clique neste botão que eu desconto os pontos na sua ficha pra você.', esperarClique: true, pular: function () { return tourAlvos.penalidade.disabled; } }
