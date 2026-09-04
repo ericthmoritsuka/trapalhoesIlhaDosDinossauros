@@ -631,10 +631,12 @@
     var balao = el('div', 'av-balao');
     var passosEl = el('div', 'av-balao-passos');
     var texto = el('p');
+    var dica = el('p', 'av-balao-dica', '👆 Clique no botão brilhando pra continuar!');
     var botaoOk = el('button', 'av-botao', 'Entendi!');
     botaoOk.type = 'button';
     balao.appendChild(passosEl);
     balao.appendChild(texto);
+    balao.appendChild(dica);
     balao.appendChild(botaoOk);
     document.body.appendChild(overlay);
     document.body.appendChild(balao);
@@ -642,9 +644,17 @@
 
     var i = -1;
     var alvoAtual = null;
+    var alvoClicavel = null;
+
+    function avancarPorClique() {
+      alvoClicavel.removeEventListener('click', avancarPorClique);
+      alvoClicavel = null;
+      proximo();
+    }
 
     function fim() {
       if (alvoAtual) alvoAtual.classList.remove('av-tour-alvo');
+      if (alvoClicavel) alvoClicavel.removeEventListener('click', avancarPorClique);
       overlay.remove();
       balao.remove();
       document.body.classList.remove('av-tour');
@@ -653,6 +663,8 @@
 
     function proximo() {
       i++;
+      // pula passos que já foram cumpridos (ex.: poder já sorteado)
+      while (i < validos.length && validos[i].pular && validos[i].pular()) i++;
       if (i >= validos.length) {
         fim();
         return;
@@ -666,6 +678,17 @@
       passosEl.textContent = validos.length > 1 ? (i + 1) + ' de ' + validos.length : '';
       texto.textContent = passo.texto;
       botaoOk.textContent = i === validos.length - 1 ? 'Entendi! Vamos lá!' : 'Entendi!';
+
+      // passo interativo: só avança clicando no próprio alvo destacado
+      if (passo.esperarClique) {
+        botaoOk.style.display = 'none';
+        dica.style.display = '';
+        alvoClicavel = alvoAtual;
+        alvoClicavel.addEventListener('click', avancarPorClique);
+      } else {
+        botaoOk.style.display = '';
+        dica.style.display = 'none';
+      }
 
       // posiciona o balão: de preferência à esquerda do alvo,
       // senão embaixo (ou em cima, se não couber)
@@ -695,7 +718,14 @@
     }
 
     botaoOk.addEventListener('click', proximo);
-    overlay.addEventListener('click', proximo);
+    overlay.addEventListener('click', function () {
+      if (validos[i] && validos[i].esperarClique) {
+        balao.classList.add('chacoalha');
+        setTimeout(function () { balao.classList.remove('chacoalha'); }, 700);
+        return;
+      }
+      proximo();
+    });
     proximo();
   }
 
@@ -826,12 +856,13 @@
     } else if (pagina === PAGINA_CRIACAO) {
       iniciarTour(TOUR_CRIACAO, [
         { alvo: tourAlvos.ficha, texto: 'Essa é a sua ficha digital! Ela guarda seu nome, seu ATAQUE e sua ENERGIA durante a aventura inteira.' },
-        { alvo: tourAlvos['sortear-ataque'], texto: 'Clique aqui pra descobrir o seu ATAQUE: o dado gira, soma 6 e anota na ficha sozinho!' },
-        { alvo: tourAlvos['sortear-energia'], texto: 'Depois clique aqui pra descobrir a sua ENERGIA. Cada poder é sorteado uma vez só — e aí é só apertar CONTINUAR!' }
+        { alvo: tourAlvos['sortear-ataque'], texto: 'Clique aqui pra descobrir o seu ATAQUE: o dado gira, soma 6 e anota na ficha sozinho!', esperarClique: true, pular: function () { return ficha.ataque !== null; } },
+        { alvo: tourAlvos['sortear-energia'], texto: 'Boa! Agora clique aqui pra descobrir a sua ENERGIA. Cada poder é sorteado uma vez só!', esperarClique: true, pular: function () { return ficha.energia !== null; } },
+        { alvo: tourAlvos.ficha, texto: 'Herói pronto! Quando os dois números aparecerem na ficha, é só apertar o botão verde CONTINUAR A AVENTURA.' }
       ]);
     } else if (penalidadeDaPagina) {
       iniciarTour(TOUR_PENALIDADE, [
-        { alvo: tourAlvos.penalidade, texto: 'Ui, seu herói levou um golpe! Quando isso acontecer, clique neste botão que eu desconto os pontos na sua ficha pra você.' }
+        { alvo: tourAlvos.penalidade, texto: 'Ui, seu herói levou um golpe! Quando isso acontecer, clique neste botão que eu desconto os pontos na sua ficha pra você.', esperarClique: true, pular: function () { return tourAlvos.penalidade.disabled; } }
       ]);
     }
   }
