@@ -657,3 +657,20 @@ body.av-tour .av-painel {
 .av-balao.chacoalha {
   animation: av-tremer 0.15s 4;
 }
+
+/* botão de pular do balão (escolha de não usar nome etc.) */
+.av-balao .av-balao-pular {
+  background-color: transparent;
+  color: var(--av-borda);
+  border: 2px dashed var(--av-borda);
+  box-shadow: none;
+  font-size: 0.9rem;
+}
+
+.av-balao .av-balao-pular:hover:not(:disabled) {
+  background-color: #eaf1fb;
+  color: var(--av-azul);
+  border-color: var(--av-azul);
+  transform: none;
+  box-shadow: none;
+}
