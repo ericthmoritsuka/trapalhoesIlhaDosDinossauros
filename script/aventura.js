@@ -17,6 +17,7 @@
   var CHAVE_MODO = 'trapalhoes.modo.v1';
   var PREFIXO_PENALIDADE = 'trapalhoes.penalidade.';
   var CHAVE_PROGRESSO = 'trapalhoes.progresso.v1';
+  var TOUR_FICHA = 'trapalhoes.tour.ficha.v1';
   var TOUR_CRIACAO = 'trapalhoes.tour.criacao.v1';
   var TOUR_CAFLITO = 'trapalhoes.tour.caflito.v1';
   var TOUR_PENALIDADE = 'trapalhoes.tour.penalidade.v1';
@@ -624,7 +625,7 @@
 
   /* ---------- tour de balõezinhos (modo digital) ---------- */
 
-  function iniciarTour(chaveTour, passos) {
+  function iniciarTour(chaveTour, passos, aoTerminar) {
     if (localStorage.getItem(chaveTour)) return;
     var validos = passos.filter(function (p) { return p.alvo; });
     if (!validos.length) return;
@@ -661,6 +662,7 @@
       balao.remove();
       document.body.classList.remove('av-tour');
       localStorage.setItem(chaveTour, '1');
+      if (aoTerminar) aoTerminar();
     }
 
     function proximo() {
@@ -839,12 +841,34 @@
   var preferencia = localStorage.getItem(CHAVE_ABERTO);
   var abrir = preferencia === null ? window.innerWidth >= 1100 : preferencia === '1';
   if (precisaAtencao) abrir = true;
+  // na capa e na página de início o painel começa recolhido:
+  // a ficha digital só aparece quando o jogador escolhe esse modo
+  if (pagina === 'index.html' || pagina === 'inicio.html') abrir = false;
   if (abrir) document.body.classList.add('av-aberto');
 
   document.body.appendChild(painel);
   document.body.appendChild(toggle);
   ajustarToggle();
   atualizarFicha();
+
+  // escolher a ficha digital na página de início revela o painel
+  // com um balão de apresentação antes de seguir pra próxima página
+  var escolhaDigital = pagina === 'inicio.html' ? document.querySelector('[data-modo="digital"]') : null;
+  if (escolhaDigital && modoDigital && !localStorage.getItem(TOUR_FICHA)) {
+    escolhaDigital.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      var destino = escolhaDigital.getAttribute('href');
+      localStorage.setItem(CHAVE_MODO, 'digital');
+      localStorage.setItem(CHAVE_ABERTO, '1');
+      document.body.classList.add('av-aberto');
+      ajustarToggle();
+      iniciarTour(TOUR_FICHA, [
+        { alvo: tourAlvos.ficha || painel, texto: 'Tcharam! ✨ Essa é a sua Ficha de Aventura digital! Ela vai ficar aqui do ladinho, guardando seu nome e seus poderes durante a jornada inteira.' }
+      ], function () {
+        location.href = destino;
+      });
+    });
+  }
 
   // tours: só no modo digital, com o painel aberto na tela
   if (modoDigital && painelAberto()) {
