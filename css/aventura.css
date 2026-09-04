@@ -674,3 +674,35 @@ body.av-tour .av-painel {
   transform: none;
   box-shadow: none;
 }
+
+/* entrada dramática do inimigo quando o caflito começa */
+@keyframes av-entrada-inimigo {
+  0% {
+    transform: scale(2.6) rotate(-14deg);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  65% {
+    transform: translate(-3px, 2px) rotate(-3deg);
+  }
+  75% {
+    transform: translate(3px, -2px) rotate(3deg);
+  }
+  85% {
+    transform: translate(-2px, 0) rotate(-2deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+.av-lutador.inimigo.entrando {
+  animation: av-entrada-inimigo 0.9s ease-out 0.35s backwards;
+}
+
+.av-caflito-titulo.entrando {
+  animation: av-entrada-inimigo 0.7s ease-out backwards;
+}
