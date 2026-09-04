@@ -645,3 +645,15 @@ body.av-tour .av-painel {
   color: var(--av-borda);
   margin-left: auto;
 }
+
+/* passos interativos do tour */
+.av-balao-dica {
+  color: var(--av-verde);
+  font-size: 0.95rem;
+  animation: av-pulsar 1s infinite;
+  margin-bottom: 0 !important;
+}
+
+.av-balao.chacoalha {
+  animation: av-tremer 0.15s 4;
+}
