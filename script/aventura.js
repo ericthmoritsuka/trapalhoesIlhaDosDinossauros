@@ -854,9 +854,15 @@
   // escolher a ficha digital na página de início revela o painel
   // com um balão de apresentação antes de seguir pra próxima página
   var escolhaDigital = pagina === 'inicio.html' ? document.querySelector('[data-modo="digital"]') : null;
-  if (escolhaDigital && modoDigital && !localStorage.getItem(TOUR_FICHA)) {
+  if (escolhaDigital && modoDigital) {
+    var revelando = false;
     escolhaDigital.addEventListener('click', function (ev) {
+      // decide NA HORA do clique: se a apresentação já foi vista (inclusive
+      // quando o navegador restaura a página com o "voltar"), navega normal
+      if (localStorage.getItem(TOUR_FICHA)) return;
       ev.preventDefault();
+      if (revelando) return;
+      revelando = true;
       var destino = escolhaDigital.getAttribute('href');
       localStorage.setItem(CHAVE_MODO, 'digital');
       localStorage.setItem(CHAVE_ABERTO, '1');
