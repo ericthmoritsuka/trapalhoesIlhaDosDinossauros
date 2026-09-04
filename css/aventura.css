@@ -443,3 +443,62 @@ body.av-aberto .av-painel {
     max-height: calc(100vh - 110px);
   }
 }
+
+/* ---------- modos de jogo: papel x digital ---------- */
+
+/* blocos de conteúdo que só aparecem no modo escolhido */
+body:not(.modo-papel) .so-papel {
+  display: none !important;
+}
+
+body:not(.modo-digital) .so-digital {
+  display: none !important;
+}
+
+/* no modo papel o painel vira só um dadão */
+.av-painel.papel .av-dado {
+  width: 130px;
+  height: 130px;
+  padding: 16px;
+  gap: 5px;
+  border-radius: 20px;
+}
+
+.av-trocar-modo {
+  background-color: transparent;
+  color: var(--av-borda);
+  border: 2px dashed var(--av-borda);
+  box-shadow: none;
+  font-size: 0.85rem;
+}
+
+.av-trocar-modo:hover:not(:disabled) {
+  background-color: #eaf1fb;
+  color: var(--av-azul);
+  border-color: var(--av-azul);
+  transform: none;
+  box-shadow: none;
+}
+
+/* campo de nome dentro da própria página (sincronizado com o painel) */
+.nomeNaPagina {
+  font-family: 'Comic Neue', cursive;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  border: 3px dashed var(--av-azul);
+  border-radius: 12px;
+  background-color: #eaf1fb;
+  color: var(--av-tinta);
+  padding: 12px 18px;
+  width: min(420px, 100%);
+  box-sizing: border-box;
+  display: block;
+  margin: 0 auto;
+}
+
+.nomeEco {
+  font-weight: 700;
+  color: var(--av-verde);
+  min-height: 1.5em;
+}

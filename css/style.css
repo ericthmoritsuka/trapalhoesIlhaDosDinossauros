@@ -209,3 +209,18 @@
 .js .jsImagem.ativo {
   display: block;
 }
+
+/* link para baixar a ficha imprimível */
+.linkFicha {
+  display: block;
+  text-align: center;
+  font-weight: 700;
+  color: var(--azul);
+  text-decoration: underline;
+  margin-bottom: 14px;
+}
+
+.linkFicha:hover {
+  color: var(--vermelho);
+  text-decoration: underline;
+}

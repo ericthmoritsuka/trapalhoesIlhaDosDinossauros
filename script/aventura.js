@@ -1,8 +1,12 @@
 /*
  * Companheiro de Aventura
- * Ficha digital do Didiana Jones, dado na tela e ajudante de CAFLITO.
- * A ficha fica salva no navegador (localStorage), então dá pra fechar a
- * página e continuar a aventura de onde parou.
+ * Dois modos de jogo:
+ *  - digital: ficha completa no painel (nome, ATAQUE, ENERGIA), dado animado,
+ *    ajudante de CAFLITO e botões de penalidade — tudo salvo no navegador.
+ *  - papel: o jogador anota tudo numa folha; o painel vira só um dadão
+ *    e o botão de nova aventura.
+ * O modo escolhido, a ficha e a luta atual ficam no localStorage, então dá
+ * pra fechar a página e continuar a aventura de onde parou.
  */
 (function () {
   'use strict';
@@ -10,6 +14,7 @@
   var CHAVE_FICHA = 'trapalhoes.ficha.v1';
   var CHAVE_CAFLITO = 'trapalhoes.caflito.v1';
   var CHAVE_ABERTO = 'trapalhoes.painelAberto.v1';
+  var CHAVE_MODO = 'trapalhoes.modo.v1';
   var PREFIXO_PENALIDADE = 'trapalhoes.penalidade.';
 
   // inimigos de cada página de CAFLITO (valores tirados dos quadrinhos)
@@ -46,6 +51,19 @@
   var inimigoDaPagina = INIMIGOS[pagina] || null;
   var penalidadeDaPagina = PENALIDADES[pagina] || null;
 
+  // modo de jogo: 'digital' (padrão) ou 'papel'
+  var modo = localStorage.getItem(CHAVE_MODO) === 'papel' ? 'papel' : 'digital';
+  var modoDigital = modo === 'digital';
+  document.body.classList.add('modo-' + modo);
+
+  // botões que escolhem o modo (ex.: na página "Como você quer jogar?")
+  var escolhas = document.querySelectorAll('[data-modo]');
+  for (var e = 0; e < escolhas.length; e++) {
+    escolhas[e].addEventListener('click', function () {
+      localStorage.setItem(CHAVE_MODO, this.getAttribute('data-modo'));
+    });
+  }
+
   // voltar pra capa = recomeçar a aventura: limpa a luta e os golpes anotados
   if (pagina === 'index.html') {
     localStorage.removeItem(CHAVE_CAFLITO);
@@ -59,7 +77,7 @@
   function lerJson(chave) {
     try {
       return JSON.parse(localStorage.getItem(chave));
-    } catch (e) {
+    } catch (err) {
       return null;
     }
   }
@@ -71,7 +89,7 @@
   }
 
   var caflito = lerJson(CHAVE_CAFLITO);
-  if (inimigoDaPagina) {
+  if (inimigoDaPagina && modoDigital) {
     // chegou numa página de caflito: começa (ou continua) a luta dela
     if (!caflito || caflito.pagina !== pagina) {
       caflito = { pagina: pagina, energiaInimigo: inimigoDaPagina.energia };
@@ -123,85 +141,92 @@
     })();
   }
 
-  var painel = el('aside', 'av-painel');
-  painel.appendChild(el('h2', null, '🎒 Ficha de Aventura'));
+  var painel = el('aside', 'av-painel' + (modoDigital ? '' : ' papel'));
+  painel.appendChild(el('h2', null, modoDigital ? '🎒 Ficha de Aventura' : '🎲 Seu Dado'));
 
-  // --- seção: ficha do personagem ---
-  var secFicha = el('section', 'av-secao');
-  var tituloFicha = el('div', 'av-secao-titulo', 'Didiana Jones');
-  secFicha.appendChild(tituloFicha);
+  var inputNome = null;
+  var atualizarTitulo = function () {};
+  var atualizarFicha = function () {};
+  var mudarStat = function () {};
 
-  function atualizarTitulo() {
-    var nome = (ficha.nome || '').trim();
-    tituloFicha.textContent = nome ? '⭐ ' + nome + ' ⭐' : 'Didiana Jones';
-  }
+  // --- seção: ficha do personagem (só no modo digital) ---
+  if (modoDigital) {
+    var secFicha = el('section', 'av-secao');
+    var tituloFicha = el('div', 'av-secao-titulo', 'Didiana Jones');
+    secFicha.appendChild(tituloFicha);
 
-  var inputNome = el('input', 'av-nome');
-  inputNome.type = 'text';
-  inputNome.placeholder = 'Escreva seu nome aqui';
-  inputNome.maxLength = 30;
-  inputNome.value = ficha.nome || '';
-  inputNome.addEventListener('input', function () {
-    ficha.nome = inputNome.value;
-    salvarFicha();
+    atualizarTitulo = function () {
+      var nome = (ficha.nome || '').trim();
+      tituloFicha.textContent = nome ? '⭐ ' + nome + ' ⭐' : 'Didiana Jones';
+    };
+
+    inputNome = el('input', 'av-nome');
+    inputNome.type = 'text';
+    inputNome.placeholder = 'Escreva seu nome aqui';
+    inputNome.maxLength = 30;
+    inputNome.value = ficha.nome || '';
+    inputNome.addEventListener('input', function () {
+      ficha.nome = inputNome.value;
+      salvarFicha();
+      atualizarTitulo();
+    });
+    secFicha.appendChild(inputNome);
     atualizarTitulo();
-  });
-  secFicha.appendChild(inputNome);
-  atualizarTitulo();
 
-  var stats = el('div', 'av-stats');
-  secFicha.appendChild(stats);
+    var stats = el('div', 'av-stats');
+    secFicha.appendChild(stats);
 
-  var valorEls = {};
+    var valorEls = {};
 
-  function criarStat(chave, rotulo) {
-    var caixa = el('div', 'av-stat ' + chave);
-    caixa.appendChild(el('div', 'av-stat-nome', rotulo));
-    var valor = el('div', 'av-stat-valor', '–');
-    caixa.appendChild(valor);
-    valorEls[chave] = valor;
+    function criarStat(chave, rotulo) {
+      var caixa = el('div', 'av-stat ' + chave);
+      caixa.appendChild(el('div', 'av-stat-nome', rotulo));
+      var valor = el('div', 'av-stat-valor', '–');
+      caixa.appendChild(valor);
+      valorEls[chave] = valor;
 
-    var botoes = el('div', 'av-stat-botoes');
-    var menos = el('button', 'av-mini-botao', '−');
-    var mais = el('button', 'av-mini-botao', '+');
-    menos.type = mais.type = 'button';
-    menos.setAttribute('aria-label', 'tirar 1 ponto de ' + rotulo);
-    mais.setAttribute('aria-label', 'somar 1 ponto de ' + rotulo);
-    menos.addEventListener('click', function () { mudarStat(chave, -1); });
-    mais.addEventListener('click', function () { mudarStat(chave, 1); });
-    botoes.appendChild(menos);
-    botoes.appendChild(mais);
-    caixa.appendChild(botoes);
-    stats.appendChild(caixa);
-  }
-
-  criarStat('ataque', 'ATAQUE');
-  criarStat('energia', 'ENERGIA');
-
-  var avisoFicha = el('p', 'av-resultado');
-  secFicha.appendChild(avisoFicha);
-  painel.appendChild(secFicha);
-
-  function mudarStat(chave, delta) {
-    if (ficha[chave] === null) ficha[chave] = 0;
-    ficha[chave] = Math.max(0, Math.min(30, ficha[chave] + delta));
-    salvarFicha();
-    atualizarFicha();
-  }
-
-  function atualizarFicha() {
-    valorEls.ataque.textContent = ficha.ataque === null ? '–' : ficha.ataque;
-    valorEls.energia.textContent = ficha.energia === null ? '–' : ficha.energia;
-    if (ficha.energia === 0) {
-      avisoFicha.textContent = '😵 Sem energia! Didiana foi derrotado...';
-      avisoFicha.style.color = '#d43a2f';
-    } else {
-      avisoFicha.textContent = '';
+      var botoes = el('div', 'av-stat-botoes');
+      var menos = el('button', 'av-mini-botao', '−');
+      var mais = el('button', 'av-mini-botao', '+');
+      menos.type = mais.type = 'button';
+      menos.setAttribute('aria-label', 'tirar 1 ponto de ' + rotulo);
+      mais.setAttribute('aria-label', 'somar 1 ponto de ' + rotulo);
+      menos.addEventListener('click', function () { mudarStat(chave, -1); });
+      mais.addEventListener('click', function () { mudarStat(chave, 1); });
+      botoes.appendChild(menos);
+      botoes.appendChild(mais);
+      caixa.appendChild(botoes);
+      stats.appendChild(caixa);
     }
+
+    criarStat('ataque', 'ATAQUE');
+    criarStat('energia', 'ENERGIA');
+
+    var avisoFicha = el('p', 'av-resultado');
+    secFicha.appendChild(avisoFicha);
+    painel.appendChild(secFicha);
+
+    mudarStat = function (chave, delta) {
+      if (ficha[chave] === null) ficha[chave] = 0;
+      ficha[chave] = Math.max(0, Math.min(30, ficha[chave] + delta));
+      salvarFicha();
+      atualizarFicha();
+    };
+
+    atualizarFicha = function () {
+      valorEls.ataque.textContent = ficha.ataque === null ? '–' : ficha.ataque;
+      valorEls.energia.textContent = ficha.energia === null ? '–' : ficha.energia;
+      if (ficha.energia === 0) {
+        avisoFicha.textContent = '😵 Sem energia! Seu herói foi derrotado...';
+        avisoFicha.style.color = '#d43a2f';
+      } else {
+        avisoFicha.textContent = '';
+      }
+    };
   }
 
-  // --- seção: sortear ataque e energia (só na página de criação) ---
-  if (pagina === PAGINA_CRIACAO) {
+  // --- seção: sortear ataque e energia (modo digital, página de criação) ---
+  if (modoDigital && pagina === PAGINA_CRIACAO) {
     var secCriacao = el('section', 'av-secao');
     secCriacao.appendChild(el('div', 'av-secao-titulo', '✨ Descubra seu poder'));
     secCriacao.appendChild(el('p', 'av-aviso', 'O dado gira, soma 6 e anota na ficha sozinho!'));
@@ -228,8 +253,8 @@
     painel.appendChild(secCriacao);
   }
 
-  // --- seção: penalidade da página ---
-  if (penalidadeDaPagina) {
+  // --- seção: penalidade da página (só no modo digital) ---
+  if (modoDigital && penalidadeDaPagina) {
     var chavePenalidade = PREFIXO_PENALIDADE + pagina;
     var secPen = el('section', 'av-secao');
     secPen.appendChild(el('div', 'av-secao-titulo', '⚠️ Anote o golpe!'));
@@ -255,8 +280,8 @@
     painel.appendChild(secPen);
   }
 
-  // --- seção: caflito ---
-  if (inimigoDaPagina) {
+  // --- seção: caflito (só no modo digital) ---
+  if (modoDigital && inimigoDaPagina) {
     var secCaflito = el('section', 'av-secao caflito');
     secCaflito.appendChild(el('div', 'av-caflito-titulo', '💥 Caflito!'));
 
@@ -280,7 +305,7 @@
     secCaflito.appendChild(vs);
 
     var dadosRodada = el('div', 'av-dados-rodada');
-    var colHeroi = el('div', 'col', 'Didiana');
+    var colHeroi = el('div', 'col', 'Você');
     var dadoHeroi = criarDado();
     var totalHeroi = el('div', null, '&nbsp;');
     colHeroi.appendChild(dadoHeroi);
@@ -386,9 +411,9 @@
     atualizarCaflito();
   }
 
-  // --- seção: dado livre ---
+  // --- seção: dado livre (nos dois modos; no papel é a estrela do painel) ---
   var secDado = el('section', 'av-secao');
-  secDado.appendChild(el('div', 'av-secao-titulo', '🎲 Dado'));
+  if (modoDigital) secDado.appendChild(el('div', 'av-secao-titulo', '🎲 Dado'));
   var areaDado = el('div', 'av-dado-area');
   var dadoLivre = criarDado();
   mostrarFace(dadoLivre, 6);
@@ -432,19 +457,64 @@
   });
   painel.appendChild(botaoReset);
 
+  // --- trocar de modo no meio do jogo ---
+  var botaoModo = el('button', 'av-botao av-trocar-modo',
+    modoDigital ? '📝 Prefiro jogar no papel' : '🖥️ Quero usar a ficha digital');
+  botaoModo.type = 'button';
+  botaoModo.addEventListener('click', function () {
+    localStorage.setItem(CHAVE_MODO, modoDigital ? 'papel' : 'digital');
+    location.reload();
+  });
+  painel.appendChild(botaoModo);
+
+  /* ---------- nome escrito na própria página (modo digital) ---------- */
+
+  var nomePagina = document.querySelector('.js-nome-jogador');
+  var nomeEco = document.querySelector('.js-nome-eco');
+
+  function ecoDoNome() {
+    if (!nomeEco) return;
+    var nome = (ficha.nome || '').trim();
+    nomeEco.textContent = nome
+      ? '⭐ Prazer, ' + nome + '! Você é o herói desta aventura!'
+      : 'Sem nome? Sem problemas: seu herói será o Didiana Jones, o aventureiro destemido da revistinha!';
+  }
+
+  if (modoDigital && nomePagina) {
+    nomePagina.value = ficha.nome || '';
+    nomePagina.addEventListener('input', function () {
+      ficha.nome = nomePagina.value;
+      salvarFicha();
+      if (inputNome) inputNome.value = nomePagina.value;
+      atualizarTitulo();
+    });
+    nomePagina.addEventListener('input', ecoDoNome);
+    if (inputNome) {
+      inputNome.addEventListener('input', function () {
+        nomePagina.value = inputNome.value;
+        ecoDoNome();
+      });
+    }
+  }
+  ecoDoNome();
+
   /* ---------- botão flutuante ---------- */
+
+  // no modo papel só chamamos atenção onde o dado é necessário
+  var precisaAtencao = modoDigital
+    ? (inimigoDaPagina || penalidadeDaPagina || pagina === PAGINA_CRIACAO)
+    : (inimigoDaPagina || pagina === PAGINA_CRIACAO);
 
   var toggle = el('button', 'av-toggle', '🎲<span class="av-toggle-alerta">!</span>');
   toggle.type = 'button';
   toggle.setAttribute('aria-label', 'Abrir ou fechar a ficha de aventura');
-  if (inimigoDaPagina || penalidadeDaPagina) toggle.classList.add('tem-alerta');
+  if (precisaAtencao) toggle.classList.add('tem-alerta');
 
   function painelAberto() {
     return document.body.classList.contains('av-aberto');
   }
 
   function ajustarToggle() {
-    toggle.firstChild.textContent = '';
     toggle.innerHTML = (painelAberto() ? '✕' : '🎲') + '<span class="av-toggle-alerta">!</span>';
   }
 
@@ -456,10 +526,10 @@
   });
 
   // abre sozinho em telas largas (ou onde o jogador deixou aberto);
-  // em páginas de caflito ou penalidade abre sempre, pra criança não perder
+  // nas páginas que precisam do painel, abre sempre pra criança não perder
   var preferencia = localStorage.getItem(CHAVE_ABERTO);
   var abrir = preferencia === null ? window.innerWidth >= 1100 : preferencia === '1';
-  if (inimigoDaPagina || penalidadeDaPagina || pagina === PAGINA_CRIACAO) abrir = true;
+  if (precisaAtencao) abrir = true;
   if (abrir) document.body.classList.add('av-aberto');
 
   document.body.appendChild(painel);
