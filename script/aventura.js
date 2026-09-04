@@ -638,10 +638,14 @@
     var dica = el('p', 'av-balao-dica', '👆 Clique no botão brilhando pra continuar!');
     var botaoOk = el('button', 'av-botao', 'Entendi!');
     botaoOk.type = 'button';
+    var botaoPular = el('button', 'av-botao av-balao-pular', 'Pular');
+    botaoPular.type = 'button';
+    botaoPular.style.display = 'none';
     balao.appendChild(passosEl);
     balao.appendChild(texto);
     balao.appendChild(dica);
     balao.appendChild(botaoOk);
+    balao.appendChild(botaoPular);
     document.body.appendChild(overlay);
     document.body.appendChild(balao);
     document.body.classList.add('av-tour');
@@ -649,6 +653,7 @@
     var i = -1;
     var alvoAtual = null;
     var alvoClicavel = null;
+    var alvoTexto = null;
 
     function avancarPorClique() {
       alvoClicavel.removeEventListener('click', avancarPorClique);
@@ -656,9 +661,21 @@
       proximo();
     }
 
+    // passo de escrever: o botão de seguir só aparece com texto na caixinha
+    function aoDigitar() {
+      if (!alvoTexto) return;
+      var passo = validos[i];
+      var escreveu = !!(alvoTexto.value || '').trim();
+      botaoOk.style.display = escreveu ? '' : 'none';
+      if (escreveu) botaoOk.textContent = passo.botaoPronto || 'Vamos lá!';
+      botaoPular.style.display = escreveu ? 'none' : '';
+      dica.style.display = escreveu ? 'none' : '';
+    }
+
     function fim() {
       if (alvoAtual) alvoAtual.classList.remove('av-tour-alvo');
       if (alvoClicavel) alvoClicavel.removeEventListener('click', avancarPorClique);
+      if (alvoTexto) alvoTexto.removeEventListener('input', aoDigitar);
       overlay.remove();
       balao.remove();
       document.body.classList.remove('av-tour');
@@ -684,12 +701,27 @@
       texto.textContent = passo.texto;
       botaoOk.textContent = i === validos.length - 1 ? 'Entendi! Vamos lá!' : 'Entendi!';
 
+      if (alvoTexto) {
+        alvoTexto.removeEventListener('input', aoDigitar);
+        alvoTexto = null;
+      }
+      botaoPular.style.display = 'none';
+
       // passo interativo: só avança clicando no próprio alvo destacado
       if (passo.esperarClique) {
         botaoOk.style.display = 'none';
         dica.style.display = '';
+        dica.textContent = passo.dica || '👆 Clique no botão brilhando pra continuar!';
         alvoClicavel = alvoAtual;
         alvoClicavel.addEventListener('click', avancarPorClique);
+      } else if (passo.esperarTexto) {
+        // passo de escrever: espera digitar no alvo (ou pular de propósito)
+        dica.textContent = passo.dica || '👆 Escreva aí na caixinha brilhando!';
+        botaoPular.textContent = passo.textoPular || 'Pular esta parte';
+        alvoTexto = alvoAtual;
+        alvoTexto.addEventListener('input', aoDigitar);
+        aoDigitar();
+        try { alvoAtual.focus(); } catch (err) {}
       } else {
         botaoOk.style.display = '';
         dica.style.display = 'none';
@@ -723,8 +755,9 @@
     }
 
     botaoOk.addEventListener('click', proximo);
+    botaoPular.addEventListener('click', proximo);
     overlay.addEventListener('click', function () {
-      if (validos[i] && validos[i].esperarClique) {
+      if (validos[i] && (validos[i].esperarClique || validos[i].esperarTexto)) {
         balao.classList.add('chacoalha');
         setTimeout(function () { balao.classList.remove('chacoalha'); }, 700);
         return;
@@ -876,7 +909,7 @@
       }
       iniciarTour(TOUR_FICHA, [
         { alvo: tourAlvos.ficha || painel, texto: 'Tcharam! ✨ Essa é a sua Ficha de Aventura digital! Ela vai ficar aqui do ladinho, guardando seu nome e seus poderes durante a jornada inteira.' },
-        { alvo: tourAlvos.nome || painel, texto: 'Agora me conta: qual é o nome do seu herói? Escreva aqui nessa caixinha — pode ser o SEU nome! Se não quiser inventar, deixe em branco que eu te apresento o herói da revistinha.' }
+        { alvo: tourAlvos.nome || painel, texto: 'Agora me conta: qual é o nome do seu herói? Escreva aqui nessa caixinha — pode ser o SEU nome!', esperarTexto: true, botaoPronto: 'Vamos lá!', textoPular: 'Não quero nome... Vou ser o Didiana Jones!', dica: '👆 Escreva o nome na caixinha brilhando!' }
       ], function () {
         // com nome vai direto pros poderes; sem nome conhece o Didiana Jones
         location.href = (ficha.nome || '').trim()
