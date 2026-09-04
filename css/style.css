@@ -225,3 +225,78 @@
   color: var(--vermelho);
   text-decoration: underline;
 }
+
+/* ---------- escolha de itens (página do guarda-roupa) ---------- */
+
+.escolhaItens {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 10px;
+}
+
+@media (max-width: 600px) {
+  .escolhaItens {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.itemCard {
+  position: relative;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--tinta);
+  background-color: #fff;
+  border: 3px solid var(--areia);
+  border-radius: 12px;
+  padding: 12px 8px;
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  align-content: start;
+  transition: transform 0.1s;
+}
+
+.itemCard img {
+  height: 84px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.itemCard:hover {
+  transform: scale(1.04);
+}
+
+.itemCard.escolhido {
+  border-color: var(--verde);
+  background-color: #e8f5e9;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.35);
+}
+
+.itemCard .marcado {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 1.3rem;
+  color: var(--verde);
+  display: none;
+}
+
+.itemCard.escolhido .marcado {
+  display: block;
+}
+
+.contadorItens {
+  font-weight: 700;
+  font-size: 1.15rem;
+  margin-top: 14px;
+}
+
+.avisoItens {
+  font-weight: 700;
+  color: var(--vermelho);
+  min-height: 1.4em;
+}

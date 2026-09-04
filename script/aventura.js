@@ -42,6 +42,18 @@
 
   var PAGINA_CRIACAO = 'criandoPersonagemAtaqueEnergia.html';
   var PAGINA_NOME = 'criandoPersonagemNome.html';
+  var PAGINA_ITENS = 'pagina3.html';
+
+  // itens que dá pra escolher no guarda-roupa (página 3); o chicote vai sempre
+  var ITENS = [
+    { id: 'manual', nome: 'Manual de Pilotagem', img: './img/glossario/manual de pilotagem.webp' },
+    { id: 'cola', nome: 'Cola-tudo', img: './img/glossario/cola tudo.webp' },
+    { id: 'estetoscopio', nome: 'Estetoscópio', img: './img/glossario/estetoscopio.webp' },
+    { id: 'isqueiro', nome: 'Isqueiro', img: './img/glossario/isqueiro.jpg' },
+    { id: 'veneno', nome: 'Mata-erva daninha', img: './img/glossario/mata-erva daninha.jpg' },
+    { id: 'carne', nome: 'Carne-seca', img: './img/glossario/carne seca.jpg' }
+  ];
+  var CHICOTE = { id: 'chicote', nome: 'Chicote', img: './img/glossario/chicote.jpg' };
 
   var PIPS = {
     1: [4],
@@ -97,6 +109,7 @@
   }
 
   var ficha = lerJson(CHAVE_FICHA) || { nome: '', ataque: null, energia: null };
+  if (!ficha.itens) ficha.itens = [];
 
   function salvarFicha() {
     localStorage.setItem(CHAVE_FICHA, JSON.stringify(ficha));
@@ -250,6 +263,43 @@
         avisoFicha.textContent = '';
       }
     };
+  }
+
+  // --- seção: mochila (recolhível; aparece quando tem itens guardados) ---
+  var atualizarMochila = function () {};
+  if (modoDigital && (ficha.itens.length || pagina === PAGINA_ITENS)) {
+    var secMochila = el('section', 'av-secao');
+    var botaoMochila = el('button', 'av-botao', '🎒 Abrir a mochila');
+    botaoMochila.type = 'button';
+    var listaMochila = el('div', 'av-mochila-lista');
+    secMochila.appendChild(botaoMochila);
+    secMochila.appendChild(listaMochila);
+    painel.appendChild(secMochila);
+
+    botaoMochila.addEventListener('click', function () {
+      listaMochila.classList.toggle('aberta');
+      atualizarMochila();
+    });
+
+    atualizarMochila = function () {
+      var aberta = listaMochila.classList.contains('aberta');
+      botaoMochila.textContent = (aberta ? '🎒 Fechar a mochila' : '🎒 Abrir a mochila') +
+        ' (' + (ficha.itens.length + 1) + ' itens)';
+      listaMochila.innerHTML = '';
+      [CHICOTE].concat(ITENS.filter(function (item) {
+        return ficha.itens.indexOf(item.id) >= 0;
+      })).forEach(function (item) {
+        var linha = el('div', 'av-mochila-item');
+        var img = el('img');
+        img.src = item.img;
+        img.alt = item.nome;
+        linha.appendChild(img);
+        linha.appendChild(el('span', null, item.nome));
+        if (item.id === 'chicote') linha.appendChild(el('span', 'sempre', 'sempre com você'));
+        listaMochila.appendChild(linha);
+      });
+    };
+    atualizarMochila();
   }
 
   // --- seção: sortear ataque e energia (modo digital, página de criação) ---
@@ -655,6 +705,73 @@
     revers[rv].addEventListener('click', function () {
       localStorage.removeItem(TOUR_CAFLITO);
       history.back();
+    });
+  }
+
+  /* ---------- escolha de itens na página do guarda-roupa ---------- */
+
+  var montarItens = document.querySelector('.js-escolher-itens');
+  var avisoItens = null;
+  if (modoDigital && montarItens) {
+    var gradeItens = el('div', 'escolhaItens');
+    var contadorItens = el('p', 'contadorItens');
+    avisoItens = el('p', 'avisoItens');
+
+    function atualizarContador() {
+      contadorItens.textContent = 'Mochila: ' + ficha.itens.length + ' de 4 itens (+ o chicote, que vai sempre com você)';
+      if (ficha.itens.length === 4) {
+        avisoItens.textContent = '';
+        contadorItens.style.color = '#2e7d32';
+      } else {
+        contadorItens.style.color = '';
+      }
+    }
+
+    ITENS.forEach(function (item) {
+      var carta = el('button', 'itemCard');
+      carta.type = 'button';
+      var img = el('img');
+      img.src = item.img;
+      img.alt = item.nome;
+      carta.appendChild(img);
+      carta.appendChild(el('span', null, item.nome));
+      carta.appendChild(el('span', 'marcado', '✔'));
+      if (ficha.itens.indexOf(item.id) >= 0) carta.classList.add('escolhido');
+
+      carta.addEventListener('click', function () {
+        var posicao = ficha.itens.indexOf(item.id);
+        if (posicao >= 0) {
+          ficha.itens.splice(posicao, 1);
+          carta.classList.remove('escolhido');
+        } else if (ficha.itens.length >= 4) {
+          avisoItens.textContent = 'Só cabem 4 itens na mochila! Desmarque um pra trocar.';
+          return;
+        } else {
+          ficha.itens.push(item.id);
+          carta.classList.add('escolhido');
+          avisoItens.textContent = '';
+        }
+        salvarFicha();
+        atualizarContador();
+        atualizarMochila();
+      });
+      gradeItens.appendChild(carta);
+    });
+
+    montarItens.appendChild(gradeItens);
+    montarItens.appendChild(contadorItens);
+    montarItens.appendChild(avisoItens);
+    atualizarContador();
+  }
+
+  var continuarItens = document.querySelector('.js-continuar-itens');
+  if (modoDigital && continuarItens) {
+    continuarItens.addEventListener('click', function (ev) {
+      if (ficha.itens.length < 4) {
+        ev.preventDefault();
+        if (avisoItens) avisoItens.textContent = 'Escolha 4 itens antes de continuar!';
+        if (montarItens) montarItens.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     });
   }
 
