@@ -458,7 +458,7 @@
   // abre sozinho em telas largas (ou onde o jogador deixou aberto);
   // em páginas de caflito ou penalidade abre sempre, pra criança não perder
   var preferencia = localStorage.getItem(CHAVE_ABERTO);
-  var abrir = preferencia === null ? window.innerWidth >= 1340 : preferencia === '1';
+  var abrir = preferencia === null ? window.innerWidth >= 1100 : preferencia === '1';
   if (inimigoDaPagina || penalidadeDaPagina || pagina === PAGINA_CRIACAO) abrir = true;
   if (abrir) document.body.classList.add('av-aberto');
 
