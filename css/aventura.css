@@ -79,11 +79,18 @@ body.av-aberto .av-painel {
   display: block;
 }
 
-/* em telas largas o painel encosta na lateral e o livro abre espaço */
-@media (min-width: 1340px) {
+/* em telas largas o painel encosta na lateral e o livro abre espaço
+   (a página encolhe se precisar, em vez de ficar embaixo do painel) */
+@media (min-width: 1100px) {
+  body.av-aberto .bg {
+    margin-left: 24px;
+    margin-right: 430px;
+  }
+}
+
+@media (min-width: 1400px) {
   body.av-aberto .bg {
     margin-left: auto;
-    margin-right: 370px;
   }
 }
 
