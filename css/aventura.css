@@ -585,3 +585,24 @@ body.av-tour .av-painel {
   margin-left: -12px;
   border-top-color: var(--av-tinta);
 }
+
+/* ---------- dado clicável e campos trancados ---------- */
+
+.av-dado.clicavel {
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.av-dado.clicavel:hover {
+  transform: scale(1.08) rotate(-6deg);
+}
+
+.av-nome:disabled,
+.av-mini-botao:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.av-mini-botao:disabled:hover {
+  background-color: #fff;
+}

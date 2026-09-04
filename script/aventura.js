@@ -16,6 +16,7 @@
   var CHAVE_ABERTO = 'trapalhoes.painelAberto.v1';
   var CHAVE_MODO = 'trapalhoes.modo.v1';
   var PREFIXO_PENALIDADE = 'trapalhoes.penalidade.';
+  var CHAVE_PROGRESSO = 'trapalhoes.progresso.v1';
   var TOUR_CRIACAO = 'trapalhoes.tour.criacao.v1';
   var TOUR_CAFLITO = 'trapalhoes.tour.caflito.v1';
   var TOUR_PENALIDADE = 'trapalhoes.tour.penalidade.v1';
@@ -66,6 +67,15 @@
       localStorage.setItem(CHAVE_MODO, this.getAttribute('data-modo'));
     });
   }
+
+  // progresso na criação do personagem: 0 = ainda não chegou lá,
+  // 1 = já pode escrever o nome, 2 = já pode mexer em ATAQUE/ENERGIA e no dado.
+  // Fora das páginas iniciais o jogo está rolando, então libera tudo.
+  var PAGINAS_INICIAIS = ['index.html', 'inicio.html', 'fichaPersonagem.html', 'criandoPersonagemNome.html'];
+  var progresso = parseInt(localStorage.getItem(CHAVE_PROGRESSO), 10) || 0;
+  if (PAGINAS_INICIAIS.indexOf(pagina) < 0) progresso = 2;
+  else if (pagina === 'criandoPersonagemNome.html') progresso = Math.max(progresso, 1);
+  localStorage.setItem(CHAVE_PROGRESSO, String(progresso));
 
   // voltar pra capa = recomeçar a aventura: limpa a luta e os golpes anotados
   if (pagina === 'index.html') {
@@ -167,9 +177,14 @@
 
     inputNome = el('input', 'av-nome');
     inputNome.type = 'text';
-    inputNome.placeholder = 'Escreva seu nome aqui';
     inputNome.maxLength = 30;
     inputNome.value = ficha.nome || '';
+    if (progresso >= 1) {
+      inputNome.placeholder = 'Escreva seu nome aqui';
+    } else {
+      inputNome.placeholder = 'Já já você escreve seu nome!';
+      inputNome.disabled = true;
+    }
     inputNome.addEventListener('input', function () {
       ficha.nome = inputNome.value;
       salvarFicha();
@@ -198,6 +213,7 @@
       mais.setAttribute('aria-label', 'somar 1 ponto de ' + rotulo);
       menos.addEventListener('click', function () { mudarStat(chave, -1); });
       mais.addEventListener('click', function () { mudarStat(chave, 1); });
+      if (progresso < 2) menos.disabled = mais.disabled = true;
       botoes.appendChild(menos);
       botoes.appendChild(mais);
       caixa.appendChild(botoes);
@@ -422,6 +438,8 @@
   }
 
   // --- seção: dado livre (nos dois modos; no papel é a estrela do painel) ---
+  // sem botão: o jogador clica no próprio dado.
+  // No modo digital ele destrava junto com o resto da ficha.
   var secDado = el('section', 'av-secao');
   if (modoDigital) secDado.appendChild(el('div', 'av-secao-titulo', '🎲 Dado'));
   var areaDado = el('div', 'av-dado-area');
@@ -429,18 +447,26 @@
   mostrarFace(dadoLivre, 6);
   areaDado.appendChild(dadoLivre);
   secDado.appendChild(areaDado);
-  var botaoDado = el('button', 'av-botao', 'Jogar o dado');
-  botaoDado.type = 'button';
+  var avisoDado = el('p', 'av-aviso');
   var resultadoDado = el('p', 'av-resultado');
-  botaoDado.addEventListener('click', function () {
-    botaoDado.disabled = true;
-    resultadoDado.textContent = '...';
-    rolarDado(dadoLivre, function (valor) {
-      botaoDado.disabled = false;
-      resultadoDado.textContent = 'Deu ' + valor + '!';
+  var dadoLiberado = !modoDigital || progresso >= 2;
+  var dadoOcupado = false;
+  if (dadoLiberado) {
+    dadoLivre.classList.add('clicavel');
+    dadoLivre.setAttribute('role', 'button');
+    dadoLivre.setAttribute('aria-label', 'Jogar o dado');
+    avisoDado.textContent = 'Clique no dado pra jogar!';
+    dadoLivre.addEventListener('click', function () {
+      if (dadoOcupado) return;
+      dadoOcupado = true;
+      resultadoDado.textContent = '...';
+      rolarDado(dadoLivre, function (valor) {
+        dadoOcupado = false;
+        resultadoDado.textContent = 'Deu ' + valor + '!';
+      });
     });
-  });
-  secDado.appendChild(botaoDado);
+  }
+  secDado.appendChild(avisoDado);
   secDado.appendChild(resultadoDado);
   painel.appendChild(secDado);
 
@@ -460,6 +486,7 @@
     }
     localStorage.removeItem(CHAVE_FICHA);
     localStorage.removeItem(CHAVE_CAFLITO);
+    localStorage.removeItem(CHAVE_PROGRESSO);
     Object.keys(sessionStorage).forEach(function (chave) {
       if (chave.indexOf(PREFIXO_PENALIDADE) === 0) sessionStorage.removeItem(chave);
     });
