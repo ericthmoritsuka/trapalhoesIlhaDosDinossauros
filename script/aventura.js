@@ -669,20 +669,26 @@
           msgTreino.textContent = '😮 Empate! Ninguém perde pontos. Joguem de novo!';
         }
 
-        // se o balão do tutorial está esperando, narra a rodada com os números
+        // enquanto o balão do tutorial estiver aberto, narra CADA rodada
+        // com os números — até alguém ser derrotado
         if (explicadorDeRodada) {
           var narracao = 'Olha o que aconteceu: VOCÊ fez ' + valoresTreino.heroi + ' no dado + ' +
             treinoAtaque + ' de ATAQUE = ' + somaHeroi + '. A ESTÁTUA fez ' + valoresTreino.inimigo +
             ' + ' + INIMIGO_TREINO.ataque + ' = ' + somaInimigo + '. ';
           if (somaHeroi > somaInimigo) {
-            narracao += 'Como ' + somaInimigo + ' é MENOR, a estátua perdeu 1 coração! Continue até ela ficar sem nenhum.';
+            narracao += 'Como ' + somaInimigo + ' é MENOR, a estátua perdeu 1 coração!';
+            narracao += treinoEnergiaInimigo <= 0
+              ? ' 💥 E era o último: VOCÊ VENCEU O TREINO! Aperte o botão e siga pra aventura!'
+              : ' Jogue de novo até ela ficar sem nenhum.';
           } else if (somaInimigo > somaHeroi) {
-            narracao += 'Como ' + somaHeroi + ' é MENOR, você perdeu 1 coração (só de treino!). Revanche: jogue de novo!';
+            narracao += 'Como ' + somaHeroi + ' é MENOR, você perdeu 1 coração (só de treino!).';
+            narracao += treinoEnergia <= 0
+              ? ' 😵 Acabaram os seus corações... mas era treino! Aperte TREINAR DE NOVO e tente outra vez.'
+              : ' Revanche: jogue de novo!';
           } else {
             narracao += 'Empatou! Ninguém perde coração — é só jogar a rodada de novo.';
           }
           explicadorDeRodada(narracao);
-          explicadorDeRodada = null;
         }
         botaoTreino.disabled = false;
         atualizarTreino();
