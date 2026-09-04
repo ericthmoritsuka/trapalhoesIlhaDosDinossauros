@@ -84,7 +84,7 @@
   // progresso na criação do personagem: 0 = ainda não chegou lá,
   // 1 = já pode escrever o nome, 2 = já pode mexer em ATAQUE/ENERGIA e no dado.
   // Fora das páginas iniciais o jogo está rolando, então libera tudo.
-  var PAGINAS_INICIAIS = ['index.html', 'inicio.html', 'fichaPersonagem.html', 'criandoPersonagemNome.html'];
+  var PAGINAS_INICIAIS = ['index.html', 'inicio.html', 'criandoPersonagemNome.html'];
   var progresso = parseInt(localStorage.getItem(CHAVE_PROGRESSO), 10) || 0;
   if (PAGINAS_INICIAIS.indexOf(pagina) < 0) progresso = 2;
   else if (pagina === PAGINA_NOME) progresso = Math.max(progresso, 1);
