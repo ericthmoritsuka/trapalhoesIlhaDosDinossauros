@@ -206,6 +206,7 @@
       atualizarTitulo();
     });
     secFicha.appendChild(inputNome);
+    tourAlvos.nome = inputNome;
     atualizarTitulo();
 
     var stats = el('div', 'av-stats');
@@ -863,15 +864,24 @@
       ev.preventDefault();
       if (revelando) return;
       revelando = true;
-      var destino = escolhaDigital.getAttribute('href');
       localStorage.setItem(CHAVE_MODO, 'digital');
       localStorage.setItem(CHAVE_ABERTO, '1');
       document.body.classList.add('av-aberto');
       ajustarToggle();
+      // escolher a ficha digital já libera a escrita do nome
+      localStorage.setItem(CHAVE_PROGRESSO, '1');
+      if (inputNome) {
+        inputNome.disabled = false;
+        inputNome.placeholder = 'Escreva seu nome aqui';
+      }
       iniciarTour(TOUR_FICHA, [
-        { alvo: tourAlvos.ficha || painel, texto: 'Tcharam! ✨ Essa é a sua Ficha de Aventura digital! Ela vai ficar aqui do ladinho, guardando seu nome e seus poderes durante a jornada inteira.' }
+        { alvo: tourAlvos.ficha || painel, texto: 'Tcharam! ✨ Essa é a sua Ficha de Aventura digital! Ela vai ficar aqui do ladinho, guardando seu nome e seus poderes durante a jornada inteira.' },
+        { alvo: tourAlvos.nome || painel, texto: 'Agora me conta: qual é o nome do seu herói? Escreva aqui nessa caixinha — pode ser o SEU nome! Se não quiser inventar, deixe em branco que eu te apresento o herói da revistinha.' }
       ], function () {
-        location.href = destino;
+        // com nome vai direto pros poderes; sem nome conhece o Didiana Jones
+        location.href = (ficha.nome || '').trim()
+          ? './criandoPersonagemAtaqueEnergia.html'
+          : './criandoPersonagemNome.html';
       });
     });
   }
@@ -887,7 +897,7 @@
       ]);
     } else if (pagina === PAGINA_CRIACAO) {
       iniciarTour(TOUR_CRIACAO, [
-        { alvo: tourAlvos.ficha, texto: 'Essa é a sua ficha digital! Ela guarda seu nome, seu ATAQUE e sua ENERGIA durante a aventura inteira.' },
+        { alvo: tourAlvos.ficha, texto: 'Essa é a sua ficha digital! Ela guarda seu nome, seu ATAQUE e sua ENERGIA durante a aventura inteira.', pular: function () { return !!localStorage.getItem(TOUR_FICHA); } },
         { alvo: tourAlvos['sortear-ataque'], texto: 'Clique aqui pra descobrir o seu ATAQUE: o dado gira, soma 6 e anota na ficha sozinho!', esperarClique: true, pular: function () { return ficha.ataque !== null; } },
         { alvo: tourAlvos['sortear-energia'], texto: 'Boa! Agora clique aqui pra descobrir a sua ENERGIA. Cada poder é sorteado uma vez só!', esperarClique: true, pular: function () { return ficha.energia !== null; } },
         { alvo: tourAlvos.ficha, texto: 'Herói pronto! Quando os dois números aparecerem na ficha, é só apertar o botão verde CONTINUAR A AVENTURA.' }
