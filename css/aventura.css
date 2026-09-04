@@ -606,3 +606,42 @@ body.av-tour .av-painel {
 .av-mini-botao:disabled:hover {
   background-color: #fff;
 }
+
+/* ---------- mochila no painel ---------- */
+
+.av-mochila-lista {
+  display: none;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.av-mochila-lista.aberta {
+  display: grid;
+}
+
+.av-mochila-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  background-color: var(--av-papel);
+  border: 2px solid var(--av-borda);
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+.av-mochila-item img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+  background-color: #fff;
+}
+
+.av-mochila-item .sempre {
+  font-weight: 400;
+  font-size: 0.75rem;
+  color: var(--av-borda);
+  margin-left: auto;
+}
