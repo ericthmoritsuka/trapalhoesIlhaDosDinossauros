@@ -20,6 +20,7 @@
   var TOUR_FICHA = 'trapalhoes.tour.ficha.v1';
   var TOUR_CRIACAO = 'trapalhoes.tour.criacao.v1';
   var TOUR_CAFLITO = 'trapalhoes.tour.caflito.v1';
+  var TOUR_TREINO = 'trapalhoes.tour.treino.v1';
   var TOUR_PENALIDADE = 'trapalhoes.tour.penalidade.v1';
 
   // inimigos de cada página de CAFLITO (valores tirados dos quadrinhos)
@@ -398,7 +399,7 @@
   // --- seção: caflito (só no modo digital) ---
   if (modoDigital && inimigoDaPagina) {
     var secCaflito = el('section', 'av-secao caflito');
-    secCaflito.appendChild(el('div', 'av-caflito-titulo', '💥 Caflito!'));
+    secCaflito.appendChild(el('div', 'av-caflito-titulo entrando', '💥 Caflito!'));
 
     var vs = el('div', 'av-vs');
     var heroi = el('div', 'av-lutador heroi');
@@ -408,7 +409,7 @@
     heroi.appendChild(el('span', 'quem', 'ATQ ' + (ficha.ataque === null ? '?' : '')));
     var atqHeroiEl = heroi.lastChild;
 
-    var inimigo = el('div', 'av-lutador inimigo');
+    var inimigo = el('div', 'av-lutador inimigo entrando');
     inimigo.appendChild(el('span', 'quem', inimigoDaPagina.nome));
     var vidaInimigo = el('span', 'vida');
     inimigo.appendChild(vidaInimigo);
@@ -537,7 +538,7 @@
     var treinoEnergiaInimigo = INIMIGO_TREINO.energia;
 
     var secTreino = el('section', 'av-secao caflito');
-    secTreino.appendChild(el('div', 'av-caflito-titulo', '🥊 Caflito de Treino!'));
+    secTreino.appendChild(el('div', 'av-caflito-titulo entrando', '🥊 Caflito de Treino!'));
     secTreino.appendChild(el('p', 'av-aviso', 'É só treino: sua energia de verdade não muda!'));
 
     var vsTreino = el('div', 'av-vs');
@@ -547,7 +548,7 @@
     heroiTreino.appendChild(vidaHeroiTreino);
     heroiTreino.appendChild(el('span', 'quem', 'ATQ ' + treinoAtaque));
 
-    var inimigoTreino = el('div', 'av-lutador inimigo');
+    var inimigoTreino = el('div', 'av-lutador inimigo entrando');
     inimigoTreino.appendChild(el('span', 'quem', INIMIGO_TREINO.nome));
     var vidaInimigoTreino = el('span', 'vida');
     inimigoTreino.appendChild(vidaInimigoTreino);
@@ -586,7 +587,8 @@
     botaoTreinarDeNovo.type = 'button';
     botaoTreinarDeNovo.style.display = 'none';
     secTreino.appendChild(botaoTreinarDeNovo);
-    painel.appendChild(secTreino);
+    // primeira seção do painel: o treino é a estrela desta página
+    painel.insertBefore(secTreino, painel.children[1] || null);
 
     tourAlvos.treinoVs = vsTreino;
     tourAlvos.treinoBotao = botaoTreino;
@@ -609,6 +611,8 @@
         msgTreino.textContent = '🎉 VOCÊ VENCEU O TREINO! Agora sim: pra aventura!';
         botaoTreino.disabled = true;
         destacarContinuarTreino();
+        // treinou = aprendeu: o primeiro caflito real não repete os balões
+        localStorage.setItem(TOUR_CAFLITO, '1');
       } else if (treinoEnergia <= 0) {
         msgTreino.className = 'av-caflito-msg derrota';
         msgTreino.textContent = '😵 A estátua ganhou dessa vez... Mas era só treino! Vamos de novo?';
@@ -1074,12 +1078,14 @@
         { alvo: tourAlvos.caflitoBotao, texto: 'Empatou? Ninguém perde nada, é só jogar de novo. Quando a luta acabar, o botão certo da história vai piscar. Boa sorte, herói!' }
       ]);
     } else if (pagina === PAGINA_TREINO) {
-      iniciarTour(TOUR_CAFLITO, [
+      iniciarTour(TOUR_TREINO, [
         { alvo: tourAlvos.treinoVs, texto: 'Hora de aprender a lutar TREINANDO! Essa é a Estátua Adoidada, um inimigo de mentirinha. Pode errar à vontade: sua energia de verdade não muda.' },
         { alvo: tourAlvos.treinoVs, texto: 'Cada lutador tem seu ATAQUE e seus corações de ENERGIA ❤️. Quem ficar sem corações primeiro perde o CAFLITO!' },
         { alvo: tourAlvos.treinoBotao, texto: 'Clique aqui pra jogar a rodada! Os dois dados giram, e cada lado soma o seu dado com o seu ATAQUE.', esperarClique: true },
         { alvo: tourAlvos.treinoBotao, texto: 'Quem fez MENOS perde 1 coração (no empate ninguém perde). Continue jogando rodadas até derrotar a estátua — quando vencer, o botão da história vai piscar!' }
-      ]);
+      ], function () {
+        localStorage.setItem(TOUR_CAFLITO, '1');
+      });
     } else if (pagina === PAGINA_CRIACAO) {
       iniciarTour(TOUR_CRIACAO, [
         { alvo: tourAlvos.ficha, texto: 'Essa é a sua ficha digital! Ela guarda seu nome, seu ATAQUE e sua ENERGIA durante a aventura inteira.', pular: function () { return !!localStorage.getItem(TOUR_FICHA); } },
