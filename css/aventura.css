@@ -79,8 +79,8 @@ body.av-aberto .av-painel {
   display: block;
 }
 
-/* em telas largas o painel encosta na lateral e o livro abre espaço
-   (a página encolhe se precisar, em vez de ficar embaixo do painel) */
+/* painel aberto em tela média: o livro abre espaço e encolhe se
+   precisar, em vez de ficar embaixo do painel */
 @media (min-width: 1100px) {
   body.av-aberto .bg {
     margin-left: 24px;
@@ -88,9 +88,16 @@ body.av-aberto .av-painel {
   }
 }
 
-@media (min-width: 1400px) {
+/* tela larga: livro + painel viram um conjunto só, centralizado.
+   Conta: livro 1024 (960 + padding e borda) + 40 de vão + painel 364 */
+@media (min-width: 1470px) {
   body.av-aberto .bg {
-    margin-left: auto;
+    margin-left: calc((100vw - 1428px) / 2);
+    margin-right: auto;
+  }
+
+  body.av-aberto .av-painel {
+    right: calc((100vw - 1428px) / 2);
   }
 }
 
