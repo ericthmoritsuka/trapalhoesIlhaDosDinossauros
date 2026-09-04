@@ -44,6 +44,10 @@
   var PAGINA_CRIACAO = 'criandoPersonagemAtaqueEnergia.html';
   var PAGINA_NOME = 'criandoPersonagemNome.html';
   var PAGINA_ITENS = 'pagina3.html';
+  var PAGINA_TREINO = 'explicandoCaflito.html';
+
+  // inimigo de mentirinha do caflito de treino (o exemplo da revistinha)
+  var INIMIGO_TREINO = { nome: 'Estátua Adoidada', ataque: 6, energia: 2 };
 
   // itens que dá pra escolher no guarda-roupa (página 3); o chicote vai sempre
   var ITENS = [
@@ -524,6 +528,147 @@
     atualizarCaflito();
   }
 
+  // --- seção: caflito de treino (página que ensina a lutar, modo digital) ---
+  // uma luta de mentirinha contra a Estátua Adoidada: mesmas regras,
+  // mas a energia de verdade da ficha não muda nada
+  if (modoDigital && pagina === PAGINA_TREINO) {
+    var treinoAtaque = ficha.ataque !== null ? ficha.ataque : 10;
+    var treinoEnergia = ficha.energia !== null ? ficha.energia : 10;
+    var treinoEnergiaInimigo = INIMIGO_TREINO.energia;
+
+    var secTreino = el('section', 'av-secao caflito');
+    secTreino.appendChild(el('div', 'av-caflito-titulo', '🥊 Caflito de Treino!'));
+    secTreino.appendChild(el('p', 'av-aviso', 'É só treino: sua energia de verdade não muda!'));
+
+    var vsTreino = el('div', 'av-vs');
+    var heroiTreino = el('div', 'av-lutador heroi');
+    heroiTreino.appendChild(el('span', 'quem', ficha.nome ? ficha.nome : 'Didiana'));
+    var vidaHeroiTreino = el('span', 'vida');
+    heroiTreino.appendChild(vidaHeroiTreino);
+    heroiTreino.appendChild(el('span', 'quem', 'ATQ ' + treinoAtaque));
+
+    var inimigoTreino = el('div', 'av-lutador inimigo');
+    inimigoTreino.appendChild(el('span', 'quem', INIMIGO_TREINO.nome));
+    var vidaInimigoTreino = el('span', 'vida');
+    inimigoTreino.appendChild(vidaInimigoTreino);
+    inimigoTreino.appendChild(el('span', 'quem', 'ATQ ' + INIMIGO_TREINO.ataque));
+
+    vsTreino.appendChild(heroiTreino);
+    vsTreino.appendChild(el('span', 'av-vs-x', '✖'));
+    vsTreino.appendChild(inimigoTreino);
+    secTreino.appendChild(vsTreino);
+
+    var dadosTreino = el('div', 'av-dados-rodada');
+    var colHeroiTreino = el('div', 'col', 'Você');
+    var dadoHeroiTreino = criarDado();
+    var totalHeroiTreino = el('div', null, '&nbsp;');
+    colHeroiTreino.appendChild(dadoHeroiTreino);
+    colHeroiTreino.appendChild(totalHeroiTreino);
+    var colInimigoTreino = el('div', 'col', 'Estátua');
+    var dadoInimigoTreino = criarDado('inimigo');
+    var totalInimigoTreino = el('div', null, '&nbsp;');
+    colInimigoTreino.appendChild(dadoInimigoTreino);
+    colInimigoTreino.appendChild(totalInimigoTreino);
+    dadosTreino.appendChild(colHeroiTreino);
+    dadosTreino.appendChild(colInimigoTreino);
+    mostrarFace(dadoHeroiTreino, 1);
+    mostrarFace(dadoInimigoTreino, 1);
+    secTreino.appendChild(dadosTreino);
+
+    var botaoTreino = el('button', 'av-botao destaque', '🎲 Jogar a rodada!');
+    botaoTreino.type = 'button';
+    secTreino.appendChild(botaoTreino);
+
+    var msgTreino = el('p', 'av-caflito-msg');
+    secTreino.appendChild(msgTreino);
+
+    var botaoTreinarDeNovo = el('button', 'av-botao verde', '🥊 Treinar de novo!');
+    botaoTreinarDeNovo.type = 'button';
+    botaoTreinarDeNovo.style.display = 'none';
+    secTreino.appendChild(botaoTreinarDeNovo);
+    painel.appendChild(secTreino);
+
+    tourAlvos.treinoVs = vsTreino;
+    tourAlvos.treinoBotao = botaoTreino;
+
+    function destacarContinuarTreino() {
+      var links = document.querySelectorAll('a.botao');
+      for (var i = 0; i < links.length; i++) {
+        if ((links[i].getAttribute('href') || '').indexOf('pagina1.html') >= 0) {
+          links[i].classList.add('av-caminho-vitoria');
+        }
+      }
+    }
+
+    function atualizarTreino() {
+      vidaHeroiTreino.textContent = '❤️' + treinoEnergia;
+      vidaInimigoTreino.textContent = '❤️' + treinoEnergiaInimigo;
+
+      if (treinoEnergiaInimigo <= 0) {
+        msgTreino.className = 'av-caflito-msg vitoria';
+        msgTreino.textContent = '🎉 VOCÊ VENCEU O TREINO! Agora sim: pra aventura!';
+        botaoTreino.disabled = true;
+        destacarContinuarTreino();
+      } else if (treinoEnergia <= 0) {
+        msgTreino.className = 'av-caflito-msg derrota';
+        msgTreino.textContent = '😵 A estátua ganhou dessa vez... Mas era só treino! Vamos de novo?';
+        botaoTreino.disabled = true;
+        botaoTreinarDeNovo.style.display = '';
+      }
+    }
+
+    botaoTreinarDeNovo.addEventListener('click', function () {
+      treinoEnergia = ficha.energia !== null ? ficha.energia : 10;
+      treinoEnergiaInimigo = INIMIGO_TREINO.energia;
+      botaoTreino.disabled = false;
+      botaoTreinarDeNovo.style.display = 'none';
+      msgTreino.className = 'av-caflito-msg';
+      msgTreino.textContent = '';
+      totalHeroiTreino.innerHTML = '&nbsp;';
+      totalInimigoTreino.innerHTML = '&nbsp;';
+      atualizarTreino();
+    });
+
+    botaoTreino.addEventListener('click', function () {
+      botaoTreino.disabled = true;
+      msgTreino.className = 'av-caflito-msg';
+      msgTreino.textContent = 'Rolando os dados...';
+      totalHeroiTreino.innerHTML = '&nbsp;';
+      totalInimigoTreino.innerHTML = '&nbsp;';
+
+      var valoresTreino = {};
+      var prontosTreino = 0;
+
+      function terminouTreino(quem, valor) {
+        valoresTreino[quem] = valor;
+        prontosTreino++;
+        if (prontosTreino < 2) return;
+
+        var somaHeroi = valoresTreino.heroi + treinoAtaque;
+        var somaInimigo = valoresTreino.inimigo + INIMIGO_TREINO.ataque;
+        totalHeroiTreino.textContent = valoresTreino.heroi + ' + ' + treinoAtaque + ' = ' + somaHeroi;
+        totalInimigoTreino.textContent = valoresTreino.inimigo + ' + ' + INIMIGO_TREINO.ataque + ' = ' + somaInimigo;
+
+        if (somaHeroi > somaInimigo) {
+          treinoEnergiaInimigo--;
+          msgTreino.textContent = '💪 Você ganhou a rodada! A estátua perde 1 coração.';
+        } else if (somaInimigo > somaHeroi) {
+          treinoEnergia--;
+          msgTreino.textContent = '💢 A estátua ganhou a rodada! Você perde 1 coração (de treino).';
+        } else {
+          msgTreino.textContent = '😮 Empate! Ninguém perde pontos. Joguem de novo!';
+        }
+        botaoTreino.disabled = false;
+        atualizarTreino();
+      }
+
+      rolarDado(dadoHeroiTreino, function (v) { terminouTreino('heroi', v); });
+      rolarDado(dadoInimigoTreino, function (v) { terminouTreino('inimigo', v); });
+    });
+
+    atualizarTreino();
+  }
+
   // --- seção: dado livre (nos dois modos; no papel é a estrela do painel) ---
   // sem botão: o jogador clica no próprio dado.
   // No modo digital ele destrava junto com o resto da ficha.
@@ -847,7 +992,7 @@
 
   // no modo papel só chamamos atenção onde o dado é necessário
   var precisaAtencao = modoDigital
-    ? (inimigoDaPagina || penalidadeDaPagina || pagina === PAGINA_CRIACAO || pagina === PAGINA_NOME)
+    ? (inimigoDaPagina || penalidadeDaPagina || pagina === PAGINA_CRIACAO || pagina === PAGINA_NOME || pagina === PAGINA_TREINO)
     : (inimigoDaPagina || pagina === PAGINA_CRIACAO);
 
   var toggle = el('button', 'av-toggle', '🎲<span class="av-toggle-alerta">!</span>');
@@ -927,6 +1072,13 @@
         { alvo: tourAlvos.caflitoVs, texto: 'Esses corações ❤️ são a ENERGIA de cada um. Quem ficar sem corações primeiro, perde o CAFLITO!' },
         { alvo: tourAlvos.caflitoBotao, texto: 'Pra lutar, clique aqui! Os dois dados giram, e cada lado soma o seu dado com o seu ATAQUE. Quem fizer MENOS perde 1 coração.' },
         { alvo: tourAlvos.caflitoBotao, texto: 'Empatou? Ninguém perde nada, é só jogar de novo. Quando a luta acabar, o botão certo da história vai piscar. Boa sorte, herói!' }
+      ]);
+    } else if (pagina === PAGINA_TREINO) {
+      iniciarTour(TOUR_CAFLITO, [
+        { alvo: tourAlvos.treinoVs, texto: 'Hora de aprender a lutar TREINANDO! Essa é a Estátua Adoidada, um inimigo de mentirinha. Pode errar à vontade: sua energia de verdade não muda.' },
+        { alvo: tourAlvos.treinoVs, texto: 'Cada lutador tem seu ATAQUE e seus corações de ENERGIA ❤️. Quem ficar sem corações primeiro perde o CAFLITO!' },
+        { alvo: tourAlvos.treinoBotao, texto: 'Clique aqui pra jogar a rodada! Os dois dados giram, e cada lado soma o seu dado com o seu ATAQUE.', esperarClique: true },
+        { alvo: tourAlvos.treinoBotao, texto: 'Quem fez MENOS perde 1 coração (no empate ninguém perde). Continue jogando rodadas até derrotar a estátua — quando vencer, o botão da história vai piscar!' }
       ]);
     } else if (pagina === PAGINA_CRIACAO) {
       iniciarTour(TOUR_CRIACAO, [
