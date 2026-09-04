@@ -17,12 +17,20 @@
 <body>
   <div class="bg">
     <div class="texto">
-      <h1>Personagem</h1>
-      <p>Olá Jogador. Vamos começar?</p>
-      <p class="blue">Primeiro, escreva o seu nome na sua ficha</p>
-      <p class="green">Está usando a ficha digital? Então escreva seu nome na caixinha "Escreva seu nome aqui", no painel do lado da tela. Ele vai aparecer durante toda a aventura!</p>
-      <img src="./img/ficha de personagem 1.png" alt="">
-      <p>Seu personagem se chama Didiana Jones, um aventureiro destemido que usa sua astúcia para se salvar das mais inusitadas situações.</p>
+      <h1>Quem é você, herói?</h1>
+      <p>Todo grande aventureiro precisa de um nome. E o melhor: <span class="bold">pode ser o SEU nome!</span></p>
+
+      <div class="so-digital">
+        <p class="blue">Escreva o nome do herói aqui embaixo. Ele vai direto pra sua ficha digital — olha ela ali do lado! 👉</p>
+        <input type="text" class="nomeNaPagina js-nome-jogador" maxlength="30" placeholder="Escreva o nome do herói aqui">
+        <p class="nomeEco js-nome-eco"></p>
+      </div>
+
+      <div class="so-papel">
+        <p class="blue">Faça no papel uma ficha como essa e escreva o nome do herói nela:</p>
+        <img src="./img/ficha de personagem 1.png" alt="Exemplo de ficha de personagem com o campo de nome preenchido">
+        <p>Não quer usar o seu nome? Sem problemas: seu herói será o <span class="bold">Didiana Jones</span>, o aventureiro destemido da revistinha, que usa sua astúcia para se salvar das mais inusitadas situações!</p>
+      </div>
     </div>
     <div class="imagem">
       <p>Clique no Didiana Jones para continuar a montar seu personagem</p>
