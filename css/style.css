@@ -144,6 +144,7 @@
 }
 
 .botao {
+  cursor: pointer;
   font-family: 'Comic Neue', cursive;
   font-weight: 700;
   background-color: var(--amarelo);
