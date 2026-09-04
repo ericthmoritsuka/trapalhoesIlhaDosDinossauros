@@ -41,6 +41,7 @@
   };
 
   var PAGINA_CRIACAO = 'criandoPersonagemAtaqueEnergia.html';
+  var PAGINA_NOME = 'criandoPersonagemNome.html';
 
   var PIPS = {
     1: [4],
@@ -74,7 +75,7 @@
   var PAGINAS_INICIAIS = ['index.html', 'inicio.html', 'fichaPersonagem.html', 'criandoPersonagemNome.html'];
   var progresso = parseInt(localStorage.getItem(CHAVE_PROGRESSO), 10) || 0;
   if (PAGINAS_INICIAIS.indexOf(pagina) < 0) progresso = 2;
-  else if (pagina === 'criandoPersonagemNome.html') progresso = Math.max(progresso, 1);
+  else if (pagina === PAGINA_NOME) progresso = Math.max(progresso, 1);
   localStorage.setItem(CHAVE_PROGRESSO, String(progresso));
 
   // voltar pra capa = recomeçar a aventura: limpa a luta e os golpes anotados
@@ -213,7 +214,11 @@
       mais.setAttribute('aria-label', 'somar 1 ponto de ' + rotulo);
       menos.addEventListener('click', function () { mudarStat(chave, -1); });
       mais.addEventListener('click', function () { mudarStat(chave, 1); });
-      if (progresso < 2) menos.disabled = mais.disabled = true;
+      // trancados antes da hora, durante o sorteio e depois que os valores
+      // estão definidos (as mudanças do jogo são automáticas — sem roubar!)
+      var statsTravados = progresso < 2 || pagina === PAGINA_CRIACAO ||
+        (ficha.ataque !== null && ficha.energia !== null);
+      if (statsTravados) menos.disabled = mais.disabled = true;
       botoes.appendChild(menos);
       botoes.appendChild(mais);
       caixa.appendChild(botoes);
@@ -248,31 +253,61 @@
   }
 
   // --- seção: sortear ataque e energia (modo digital, página de criação) ---
+  // cada poder é sorteado UMA vez só (nada de rolar de novo até sair um
+  // número bom!); quando os dois saem, aparece o resumo e o Continuar
   if (modoDigital && pagina === PAGINA_CRIACAO) {
     var secCriacao = el('section', 'av-secao');
     secCriacao.appendChild(el('div', 'av-secao-titulo', '✨ Descubra seu poder'));
     secCriacao.appendChild(el('p', 'av-aviso', 'O dado gira, soma 6 e anota na ficha sozinho!'));
 
+    var resumoCriacao = el('p', 'av-resultado');
+    var continuarCriacao = el('a', 'av-botao verde', 'Continuar a aventura ➜');
+    continuarCriacao.href = './explicandoCaflito.html';
+    resumoCriacao.style.display = 'none';
+    continuarCriacao.style.display = 'none';
+
+    var botoesSorteio = {};
+
+    function marcarSorteado(chave) {
+      botoesSorteio[chave].disabled = true;
+      botoesSorteio[chave].innerHTML = '✔ ' + chave.toUpperCase() + ': ' + ficha[chave];
+    }
+
+    function conferirCriacao() {
+      if (ficha.ataque === null || ficha.energia === null) return;
+      resumoCriacao.textContent = '⭐ Seu ATAQUE é ' + ficha.ataque +
+        ' e sua ENERGIA é ' + ficha.energia + '. Herói pronto!';
+      resumoCriacao.style.display = '';
+      continuarCriacao.style.display = '';
+    }
+
     [['ataque', 'meu ATAQUE'], ['energia', 'minha ENERGIA']].forEach(function (par) {
       var chave = par[0];
       var botao = el('button', 'av-botao', '🎲 Sortear ' + par[1]);
       botao.type = 'button';
+      botoesSorteio[chave] = botao;
       var resultado = el('p', 'av-resultado');
       botao.addEventListener('click', function () {
+        if (ficha[chave] !== null) return;
         botao.disabled = true;
         rolarDado(dadoLivre, function (valor) {
-          botao.disabled = false;
           ficha[chave] = valor + 6;
           salvarFicha();
           atualizarFicha();
-          resultado.textContent = 'Deu ' + valor + ' + 6 = ' + (valor + 6) + ' de ' + chave.toUpperCase() + '!';
-          botao.innerHTML = '🎲 Sortear de novo (' + chave.toUpperCase() + ')';
+          resultado.textContent = 'Deu ' + valor + ' + 6 = ' + (valor + 6) + '!';
+          marcarSorteado(chave);
+          conferirCriacao();
         });
       });
       secCriacao.appendChild(botao);
       secCriacao.appendChild(resultado);
       tourAlvos['sortear-' + chave] = botao;
+      if (ficha[chave] !== null) marcarSorteado(chave);
     });
+
+    secCriacao.appendChild(resumoCriacao);
+    secCriacao.appendChild(continuarCriacao);
+    conferirCriacao();
     painel.appendChild(secCriacao);
   }
 
@@ -627,7 +662,7 @@
 
   // no modo papel só chamamos atenção onde o dado é necessário
   var precisaAtencao = modoDigital
-    ? (inimigoDaPagina || penalidadeDaPagina || pagina === PAGINA_CRIACAO)
+    ? (inimigoDaPagina || penalidadeDaPagina || pagina === PAGINA_CRIACAO || pagina === PAGINA_NOME)
     : (inimigoDaPagina || pagina === PAGINA_CRIACAO);
 
   var toggle = el('button', 'av-toggle', '🎲<span class="av-toggle-alerta">!</span>');
@@ -675,7 +710,7 @@
       iniciarTour(TOUR_CRIACAO, [
         { alvo: tourAlvos.ficha, texto: 'Essa é a sua ficha digital! Ela guarda seu nome, seu ATAQUE e sua ENERGIA durante a aventura inteira.' },
         { alvo: tourAlvos['sortear-ataque'], texto: 'Clique aqui pra descobrir o seu ATAQUE: o dado gira, soma 6 e anota na ficha sozinho!' },
-        { alvo: tourAlvos['sortear-energia'], texto: 'Depois clique aqui pra descobrir a sua ENERGIA. Pronto: herói completo, sem apontar o lápis!' }
+        { alvo: tourAlvos['sortear-energia'], texto: 'Depois clique aqui pra descobrir a sua ENERGIA. Cada poder é sorteado uma vez só — e aí é só apertar CONTINUAR!' }
       ]);
     } else if (penalidadeDaPagina) {
       iniciarTour(TOUR_PENALIDADE, [
