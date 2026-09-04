@@ -569,11 +569,13 @@
       }, 4000);
       return;
     }
-    localStorage.removeItem(CHAVE_FICHA);
-    localStorage.removeItem(CHAVE_CAFLITO);
-    localStorage.removeItem(CHAVE_PROGRESSO);
+    // apaga TUDO do jogo: ficha (com o nome), luta, progresso, modo,
+    // balõezinhos já vistos... a próxima aventura começa do zerinho
+    Object.keys(localStorage).forEach(function (chave) {
+      if (chave.indexOf('trapalhoes.') === 0) localStorage.removeItem(chave);
+    });
     Object.keys(sessionStorage).forEach(function (chave) {
-      if (chave.indexOf(PREFIXO_PENALIDADE) === 0) sessionStorage.removeItem(chave);
+      if (chave.indexOf('trapalhoes.') === 0) sessionStorage.removeItem(chave);
     });
     location.href = './inicio.html';
   });
