@@ -1,9 +1,28 @@
+:root {
+  --tinta: #2b2825;
+  --papel: #fffdf5;
+  --creme: #fff4d6;
+  --vermelho: #d43a2f;
+  --azul: #1e5aa8;
+  --verde: #2e7d32;
+  --amarelo: #ffcf3f;
+  --laranja: #f28c28;
+  --areia: #d8c9a3;
+}
+
 body {
   margin: 0px;
   padding: 0px;
   font-family: 'Comic Neue', cursive;
-  background-color: antiquewhite;
+  color: var(--tinta);
+  /* céu quente da ilha com pontinhos de retícula de gibi */
+  background-color: #ffe9b0;
+  background-image:
+    radial-gradient(rgba(242, 140, 40, 0.16) 1.5px, transparent 1.5px),
+    linear-gradient(180deg, #ffe9b0 0%, #ffd98a 60%, #ffcf75 100%);
+  background-size: 22px 22px, 100% 100%;
 }
+
 a,
 a:hover,
 a:focus,
@@ -12,16 +31,18 @@ a:active {
   color: inherit;
   cursor: pointer;
 }
+
 ul {
   list-style: none;
   margin: 0px;
   padding: 0px;
 }
+
 img {
   max-width: 100%;
   height: auto;
   display: block;
-  border-radius: 5px;
+  border-radius: 8px;
   margin: 0 auto;
 }
 
@@ -33,25 +54,46 @@ h3 {
   margin-bottom: 10px;
 }
 
-p>p{
-  margin-bottom: 20px;
+h1,
+h2 {
+  font-family: 'Bangers', 'Comic Neue', cursive;
+  font-weight: 400;
+  letter-spacing: 1.5px;
+}
+
+h1 {
+  font-size: 2.2rem;
+  color: var(--vermelho);
+  text-shadow: 2px 2px 0 rgba(43, 40, 37, 0.15);
+}
+
+h2 {
+  font-size: 1.6rem;
+  color: var(--azul);
 }
 
 .bold {
   font-weight: 700;
 }
 
-.red{
-  color: red
-}
-.blue{
-  color: blue
-}
-.green{
-  color: green;
+.red {
+  color: var(--vermelho);
 }
 
-.instrucao{
-  font-weight: 300;
-  color: blue;
+.blue {
+  color: var(--azul);
+}
+
+.green {
+  color: var(--verde);
+}
+
+.instrucao {
+  display: inline-block;
+  font-weight: 700;
+  color: var(--azul);
+  background-color: #e8f1ff;
+  border: 2px dashed #a9c6ec;
+  border-radius: 8px;
+  padding: 4px 12px;
 }
