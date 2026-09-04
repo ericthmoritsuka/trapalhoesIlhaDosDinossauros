@@ -509,3 +509,79 @@ body:not(.modo-digital) .so-digital {
   color: var(--av-verde);
   min-height: 1.5em;
 }
+
+/* ---------- tour de balõezinhos (modo digital) ---------- */
+
+.av-tour-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(43, 40, 37, 0.35);
+  z-index: 1002;
+  cursor: pointer;
+}
+
+/* durante o tour o painel sobe acima da cortina escura */
+body.av-tour .av-painel {
+  z-index: 1003;
+}
+
+.av-tour-alvo {
+  box-shadow: 0 0 0 4px var(--av-amarelo), 0 0 0 8px rgba(212, 58, 47, 0.55) !important;
+  border-radius: 10px;
+  animation: av-pulsar 1.2s infinite;
+}
+
+.av-balao {
+  position: fixed;
+  z-index: 1004;
+  width: min(290px, calc(100vw - 24px));
+  box-sizing: border-box;
+  background-color: #fff;
+  border: 3px solid var(--av-tinta);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 rgba(43, 40, 37, 0.45);
+  padding: 16px;
+  font-family: 'Comic Neue', cursive;
+  color: var(--av-tinta);
+}
+
+.av-balao p {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0 0 10px;
+}
+
+.av-balao-passos {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--av-borda);
+  margin-bottom: 6px;
+}
+
+/* rabinho do balão */
+.av-balao::after {
+  content: '';
+  position: absolute;
+  border: 12px solid transparent;
+}
+
+.av-balao.rabo-direita::after {
+  right: -24px;
+  top: 28px;
+  border-left-color: var(--av-tinta);
+}
+
+.av-balao.rabo-cima::after {
+  top: -24px;
+  left: 50%;
+  margin-left: -12px;
+  border-bottom-color: var(--av-tinta);
+}
+
+.av-balao.rabo-baixo::after {
+  bottom: -24px;
+  left: 50%;
+  margin-left: -12px;
+  border-top-color: var(--av-tinta);
+}

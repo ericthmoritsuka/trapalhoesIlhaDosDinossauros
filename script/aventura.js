@@ -16,6 +16,9 @@
   var CHAVE_ABERTO = 'trapalhoes.painelAberto.v1';
   var CHAVE_MODO = 'trapalhoes.modo.v1';
   var PREFIXO_PENALIDADE = 'trapalhoes.penalidade.';
+  var TOUR_CRIACAO = 'trapalhoes.tour.criacao.v1';
+  var TOUR_CAFLITO = 'trapalhoes.tour.caflito.v1';
+  var TOUR_PENALIDADE = 'trapalhoes.tour.penalidade.v1';
 
   // inimigos de cada página de CAFLITO (valores tirados dos quadrinhos)
   var INIMIGOS = {
@@ -141,6 +144,8 @@
     })();
   }
 
+  var tourAlvos = {};
+
   var painel = el('aside', 'av-painel' + (modoDigital ? '' : ' papel'));
   painel.appendChild(el('h2', null, modoDigital ? '🎒 Ficha de Aventura' : '🎲 Seu Dado'));
 
@@ -205,6 +210,7 @@
     var avisoFicha = el('p', 'av-resultado');
     secFicha.appendChild(avisoFicha);
     painel.appendChild(secFicha);
+    tourAlvos.ficha = secFicha;
 
     mudarStat = function (chave, delta) {
       if (ficha[chave] === null) ficha[chave] = 0;
@@ -249,6 +255,7 @@
       });
       secCriacao.appendChild(botao);
       secCriacao.appendChild(resultado);
+      tourAlvos['sortear-' + chave] = botao;
     });
     painel.appendChild(secCriacao);
   }
@@ -278,6 +285,7 @@
     });
     secPen.appendChild(botaoPen);
     painel.appendChild(secPen);
+    tourAlvos.penalidade = botaoPen;
   }
 
   // --- seção: caflito (só no modo digital) ---
@@ -328,6 +336,8 @@
     var msgCaflito = el('p', 'av-caflito-msg');
     secCaflito.appendChild(msgCaflito);
     painel.appendChild(secCaflito);
+    tourAlvos.caflitoVs = vs;
+    tourAlvos.caflitoBotao = botaoRodada;
 
     function destacarCaminho(vitoria) {
       var links = document.querySelectorAll('a.botao');
@@ -498,6 +508,94 @@
   }
   ecoDoNome();
 
+  /* ---------- tour de balõezinhos (modo digital) ---------- */
+
+  function iniciarTour(chaveTour, passos) {
+    if (localStorage.getItem(chaveTour)) return;
+    var validos = passos.filter(function (p) { return p.alvo; });
+    if (!validos.length) return;
+
+    var overlay = el('div', 'av-tour-overlay');
+    var balao = el('div', 'av-balao');
+    var passosEl = el('div', 'av-balao-passos');
+    var texto = el('p');
+    var botaoOk = el('button', 'av-botao', 'Entendi!');
+    botaoOk.type = 'button';
+    balao.appendChild(passosEl);
+    balao.appendChild(texto);
+    balao.appendChild(botaoOk);
+    document.body.appendChild(overlay);
+    document.body.appendChild(balao);
+    document.body.classList.add('av-tour');
+
+    var i = -1;
+    var alvoAtual = null;
+
+    function fim() {
+      if (alvoAtual) alvoAtual.classList.remove('av-tour-alvo');
+      overlay.remove();
+      balao.remove();
+      document.body.classList.remove('av-tour');
+      localStorage.setItem(chaveTour, '1');
+    }
+
+    function proximo() {
+      i++;
+      if (i >= validos.length) {
+        fim();
+        return;
+      }
+      if (alvoAtual) alvoAtual.classList.remove('av-tour-alvo');
+      var passo = validos[i];
+      alvoAtual = passo.alvo;
+      alvoAtual.classList.add('av-tour-alvo');
+      if (alvoAtual.scrollIntoView) alvoAtual.scrollIntoView({ block: 'nearest' });
+
+      passosEl.textContent = validos.length > 1 ? (i + 1) + ' de ' + validos.length : '';
+      texto.textContent = passo.texto;
+      botaoOk.textContent = i === validos.length - 1 ? 'Entendi! Vamos lá!' : 'Entendi!';
+
+      // posiciona o balão: de preferência à esquerda do alvo,
+      // senão embaixo (ou em cima, se não couber)
+      var r = alvoAtual.getBoundingClientRect();
+      var vw = window.innerWidth;
+      var vh = window.innerHeight;
+      balao.className = 'av-balao';
+      var bw = balao.offsetWidth;
+      var bh = balao.offsetHeight;
+      var x = r.left - bw - 22;
+      var y;
+      if (x >= 8) {
+        balao.classList.add('rabo-direita');
+        y = Math.max(8, Math.min(r.top + r.height / 2 - bh / 2, vh - bh - 8));
+      } else {
+        x = Math.max(8, Math.min(r.left + r.width / 2 - bw / 2, vw - bw - 8));
+        if (r.bottom + bh + 24 <= vh - 8) {
+          balao.classList.add('rabo-cima');
+          y = r.bottom + 20;
+        } else {
+          balao.classList.add('rabo-baixo');
+          y = Math.max(8, r.top - bh - 20);
+        }
+      }
+      balao.style.left = x + 'px';
+      balao.style.top = y + 'px';
+    }
+
+    botaoOk.addEventListener('click', proximo);
+    overlay.addEventListener('click', proximo);
+    proximo();
+  }
+
+  // botão "rever a explicação" (página do reExplicandoCaflito)
+  var revers = document.querySelectorAll('.js-rever-caflito');
+  for (var rv = 0; rv < revers.length; rv++) {
+    revers[rv].addEventListener('click', function () {
+      localStorage.removeItem(TOUR_CAFLITO);
+      history.back();
+    });
+  }
+
   /* ---------- botão flutuante ---------- */
 
   // no modo papel só chamamos atenção onde o dado é necessário
@@ -536,4 +634,26 @@
   document.body.appendChild(toggle);
   ajustarToggle();
   atualizarFicha();
+
+  // tours: só no modo digital, com o painel aberto na tela
+  if (modoDigital && painelAberto()) {
+    if (inimigoDaPagina) {
+      iniciarTour(TOUR_CAFLITO, [
+        { alvo: tourAlvos.caflitoVs, texto: 'CAFLITO! Você vai enfrentar o ' + inimigoDaPagina.nome + '! Olha ele aqui, já com o ATAQUE e a ENERGIA anotados. Nem precisou de lápis!' },
+        { alvo: tourAlvos.caflitoVs, texto: 'Esses corações ❤️ são a ENERGIA de cada um. Quem ficar sem corações primeiro, perde o CAFLITO!' },
+        { alvo: tourAlvos.caflitoBotao, texto: 'Pra lutar, clique aqui! Os dois dados giram, e cada lado soma o seu dado com o seu ATAQUE. Quem fizer MENOS perde 1 coração.' },
+        { alvo: tourAlvos.caflitoBotao, texto: 'Empatou? Ninguém perde nada, é só jogar de novo. Quando a luta acabar, o botão certo da história vai piscar. Boa sorte, herói!' }
+      ]);
+    } else if (pagina === PAGINA_CRIACAO) {
+      iniciarTour(TOUR_CRIACAO, [
+        { alvo: tourAlvos.ficha, texto: 'Essa é a sua ficha digital! Ela guarda seu nome, seu ATAQUE e sua ENERGIA durante a aventura inteira.' },
+        { alvo: tourAlvos['sortear-ataque'], texto: 'Clique aqui pra descobrir o seu ATAQUE: o dado gira, soma 6 e anota na ficha sozinho!' },
+        { alvo: tourAlvos['sortear-energia'], texto: 'Depois clique aqui pra descobrir a sua ENERGIA. Pronto: herói completo, sem apontar o lápis!' }
+      ]);
+    } else if (penalidadeDaPagina) {
+      iniciarTour(TOUR_PENALIDADE, [
+        { alvo: tourAlvos.penalidade, texto: 'Ui, seu herói levou um golpe! Quando isso acontecer, clique neste botão que eu desconto os pontos na sua ficha pra você.' }
+      ]);
+    }
+  }
 })();
