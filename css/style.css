@@ -1,36 +1,70 @@
 @import './global.css';
 
+/* ---------- a "página do gibi" ---------- */
+
 .bg {
   margin: 0 auto;
   display: block;
   max-width: 960px;
-  margin-top: 50px;
-  background-color: #fff8db;
-  padding: 20px;
+  margin-top: 32px;
+  margin-bottom: 110px;
+  background-color: var(--papel);
+  border: 4px solid var(--tinta);
+  border-radius: 16px;
+  box-shadow: 10px 10px 0 rgba(43, 40, 37, 0.25);
+  padding: 28px;
 }
 
-.grid{
+@media (max-width: 600px) {
+  .bg {
+    margin: 16px 8px 110px;
+    padding: 16px;
+    box-shadow: 6px 6px 0 rgba(43, 40, 37, 0.25);
+  }
+}
+
+/* ---------- blocos de texto ---------- */
+
+.texto {
+  font-size: 1rem;
+  text-align: center;
+  margin: 10px 0 20px;
   display: grid;
-  grid-template-columns: auto auto;
+  gap: 18px;
+}
+
+.texto p {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  max-width: 46em;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
   justify-content: center;
-  gap: 30px;
+  gap: 24px;
 }
 
-.grid-item{
-  background-color: #FFF7ED;
-  border: 2px solid #65625e;
-  padding: 20px;
-  border-radius: 5px;
+.grid-item {
+  background-color: var(--creme);
+  border: 3px solid var(--areia);
+  padding: 18px;
+  border-radius: 12px;
+  height: 100%;
+  box-sizing: border-box;
 }
 
-@media(max-width: 600px){
-  .grid{
+@media (max-width: 600px) {
+  .grid {
     grid-template-columns: 1fr;
   }
 }
 
-.flex{
+.flex {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
@@ -38,84 +72,140 @@
   justify-content: center;
 }
 
-.texto {
-  color: #31302b;
-  font-size: 1rem;
-  text-align: center;
-  margin: 20px 0;
-  display: grid;
-  gap: 20px;
-}
-
-.texto p {
-  font-size: 1.25rem;
-}
-
 .item {
-  background-color: #FFF7ED;
-  border-radius: 5px;
-  font-size: 1.5rem;
+  background-color: var(--papel);
+  border: 3px solid var(--areia);
+  border-radius: 10px;
+  font-size: 1.4rem;
+  font-weight: 700;
   display: flex;
   gap: 10px;
   align-items: end;
   justify-content: center;
-  padding: 10px 0;
+  padding: 12px 8px;
+  margin-bottom: 10px;
 }
 
-.imagem{
+/* ---------- quadrinhos (imagens da história) ---------- */
+
+.imagem {
   margin: 20px 0;
   display: grid;
   justify-content: center;
+  gap: 18px;
 }
 
-.caixaBotao{
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin: 0 auto;
-  padding: 30px;
-  gap: 40px 0;
+.imagem p {
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0;
 }
+
+.imagem img {
+  border: 3px solid var(--tinta);
+  border-radius: 10px;
+  box-shadow: 6px 6px 0 rgba(43, 40, 37, 0.18);
+}
+
+.imagem a {
+  transition: transform 0.15s;
+}
+
+.imagem a:hover {
+  transform: scale(1.015) rotate(-0.4deg);
+}
+
+/* ---------- caixa de escolhas ---------- */
+
+.caixaBotao {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin: 0 auto;
+  max-width: 640px;
+  gap: 14px;
+}
+
+/* só vira "painel de decisão" quando tem botões dentro */
+.caixaBotao:has(.botao) {
+  background-color: var(--creme);
+  border: 3px dashed var(--laranja);
+  border-radius: 14px;
+  padding: 22px;
+}
+
+.caixaBotao h1,
+.caixaBotao h2,
+.caixaBotao h3,
+.caixaBotao p {
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.botao {
+  font-family: 'Comic Neue', cursive;
+  font-weight: 700;
+  background-color: var(--amarelo);
+  color: var(--tinta);
+  border: 3px solid var(--tinta);
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 1.25rem;
+  text-align: center;
+  display: block;
+  box-shadow: 4px 4px 0 var(--tinta);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.botao:hover {
+  background-color: #ffde73;
+  color: var(--tinta);
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--tinta);
+}
+
+.botao:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--tinta);
+}
+
+/* botões verdes de ajuda (definidos inline nas páginas) ficam legíveis */
+.botao[style*='green'] {
+  color: #fff;
+}
+
+/* ---------- capa (index) ---------- */
 
 .link {
-  font-size: 1.5rem;
-  background-color: #31302a;
-  color: #FFF8DB;
-  border-radius: 5px;
-  padding: 5px 20px;
-}
-.link:hover{
-  background-color: #49483e;
-  color: #ccc9af;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background-color: var(--tinta);
+  color: var(--papel);
+  border-radius: 999px;
+  padding: 8px 22px;
+  display: table;
+  margin: 20px auto 0;
 }
 
-@media (max-width:600px){
-  .link{
-    font-size: 0.75rem;
-    padding: 5px 5px;
+.link:hover {
+  background-color: #494640;
+  color: var(--amarelo);
+}
+
+@media (max-width: 600px) {
+  .link {
+    font-size: 0.85rem;
+    padding: 6px 14px;
   }
 }
 
-.botao{
-  background-color: #656257;
-  color: #FFF8DB;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-size: 1.5rem;
-  text-align: center;
-  width: 100%;
-  display: block;
-}
+/* ---------- páginas com imagem que troca no clique ---------- */
 
-.botao:hover{
-  background-color: #31302b;
-  color: #fdffdb;
-}
-
-.js .jsImagem{
+.js .jsImagem {
   display: none;
 }
 
-.js .jsImagem.ativo{
+.js .jsImagem.ativo {
   display: block;
 }
