@@ -25,10 +25,13 @@
   // (a marca de penalidade fica no localStorage, junto com a ficha)
   var CHAVE_PROGRESSO = 'trapalhoes.progresso.v1';
   var CHAVE_GRANADA = 'trapalhoes.granada.v1';
+  var PREFIXO_VENCIDO = 'trapalhoes.vencido.';
   var TOUR_FICHA = 'trapalhoes.tour.ficha.v1';
   var TOUR_CRIACAO = 'trapalhoes.tour.criacao.v1';
   var TOUR_CAFLITO = 'trapalhoes.tour.caflito.v1';
   var TOUR_TREINO = 'trapalhoes.tour.treino.v1';
+  var CHAVE_TREINO = 'trapalhoes.treino.v1';
+  var PREFIXO_TESTE = 'trapalhoes.teste.';
   var TOUR_PENALIDADE = 'trapalhoes.tour.penalidade.v1';
 
   // inimigos de cada página de CAFLITO (valores tirados dos quadrinhos)
@@ -96,11 +99,10 @@
     'baixoTempestade1.html': { menorIgual: './comManual2.html', maior: './baixoTempestade2.html' }
   };
 
-  // arremessos contra o tiranossauro: cada opção exige o item na mochila
-  var ARREMESSOS = {
-    'jogarCarne.html': 'carne',
-    'jogarPedra.html': 'pedra',
-    'jogarCola.html': 'cola'
+  // opções de página que exigem um item na mochila
+  var TRAVAS_DE_ITEM = {
+    'tiranossauroJogar1.html': { 'jogarCarne.html': 'carne', 'jogarPedra.html': 'pedra', 'jogarCola.html': 'cola' },
+    'rochas1.html': { 'assustarHomem1.html': 'isqueiro' }
   };
 
   var PIPS = {
@@ -143,16 +145,21 @@
     localStorage.removeItem(CHAVE_CAFLITO);
     localStorage.removeItem(CHAVE_GRANADA);
     Object.keys(localStorage).forEach(function (chave) {
-      if (chave.indexOf(PREFIXO_PENALIDADE) === 0) localStorage.removeItem(chave);
+      if (chave.indexOf(PREFIXO_PENALIDADE) === 0 || chave.indexOf(PREFIXO_VENCIDO) === 0 ||
+          chave.indexOf(PREFIXO_TESTE) === 0) {
+        localStorage.removeItem(chave);
+      }
     });
-    // herói derrotado renasce: os poderes serão sorteados de novo
+    localStorage.removeItem(CHAVE_TREINO);
+    // capa = aventura nova: o herói renasce inteiro (só o nome fica),
+    // senão a ficha machucada da partida anterior vira espiral de morte
     try {
-      var fichaMorta = JSON.parse(localStorage.getItem(CHAVE_FICHA));
-      if (fichaMorta && fichaMorta.energia === 0) {
-        fichaMorta.ataque = null;
-        fichaMorta.energia = null;
-        fichaMorta.itens = [];
-        localStorage.setItem(CHAVE_FICHA, JSON.stringify(fichaMorta));
+      var fichaAntiga = JSON.parse(localStorage.getItem(CHAVE_FICHA));
+      if (fichaAntiga && (fichaAntiga.ataque !== null || fichaAntiga.energia !== null || (fichaAntiga.itens || []).length)) {
+        fichaAntiga.ataque = null;
+        fichaAntiga.energia = null;
+        fichaAntiga.itens = [];
+        localStorage.setItem(CHAVE_FICHA, JSON.stringify(fichaAntiga));
       }
     } catch (err) {}
   }
@@ -168,7 +175,9 @@
   }
 
   var ficha = lerJson(CHAVE_FICHA) || { nome: '', ataque: null, energia: null };
-  if (!ficha.itens) ficha.itens = [];
+  if (!Array.isArray(ficha.itens)) ficha.itens = [];
+  if (typeof ficha.ataque !== 'number') ficha.ataque = null;
+  if (typeof ficha.energia !== 'number') ficha.energia = null;
 
   // eventos de mochila contados pela história (só no modo digital;
   // todos idempotentes, então recarregar a página não duplica nada)
@@ -180,10 +189,13 @@
       mudouMochila = true;
     }
     if (pagina === 'assustarHomem2.html') {
-      // troca combinada: isqueiro vai, tacape vem
+      // troca combinada: isqueiro vai, tacape vem (SÓ se o isqueiro existia)
       var posIsqueiro = ficha.itens.indexOf('isqueiro');
-      if (posIsqueiro >= 0) { ficha.itens.splice(posIsqueiro, 1); mudouMochila = true; }
-      if (ficha.itens.indexOf('tacape') < 0) { ficha.itens.push('tacape'); mudouMochila = true; }
+      if (posIsqueiro >= 0) {
+        ficha.itens.splice(posIsqueiro, 1);
+        if (ficha.itens.indexOf('tacape') < 0) ficha.itens.push('tacape');
+        mudouMochila = true;
+      }
     }
     if (pagina === 'jogarGranada.html') localStorage.setItem(CHAVE_GRANADA, '1');
     var GASTOS = { 'jogarCarne.html': 'carne', 'jogarPedra.html': 'pedra', 'jogarCola.html': 'cola' };
@@ -199,11 +211,14 @@
   }
 
   var caflito = lerJson(CHAVE_CAFLITO);
+  if (caflito && typeof caflito.energiaInimigo !== 'number') caflito = null;
   if (inimigoDaPagina && modoDigital) {
-    // chegou numa página de caflito: começa (ou continua) a luta dela.
-    // Luta vencida FICA vencida (voltar pra cá não ressuscita o monstro);
-    // derrota limpa o registro e a capa zera tudo entre aventuras.
-    if (!caflito || caflito.pagina !== pagina) {
+    // luta vencida FICA vencida nesta aventura (marca própria por página,
+    // então visitar outras lutas não ressuscita esta); derrota limpa o
+    // registro e a capa zera tudo entre aventuras
+    if (localStorage.getItem(PREFIXO_VENCIDO + pagina)) {
+      caflito = { pagina: pagina, energiaInimigo: 0 };
+    } else if (!caflito || caflito.pagina !== pagina) {
       caflito = { pagina: pagina, energiaInimigo: inimigoDaPagina.energia };
       localStorage.setItem(CHAVE_CAFLITO, JSON.stringify(caflito));
     }
@@ -272,6 +287,7 @@
   painel.appendChild(el('h2', null, modoDigital ? '🎒 Ficha de Aventura' : '🎲 Seu Dado'));
 
   var inputNome = null;
+  var dadoOcupado = false;
   var atualizarTitulo = function () {};
   var atualizarFicha = function () {};
   var mudarStat = function () {};
@@ -473,9 +489,11 @@
       botoesSorteio[chave] = botao;
       var resultado = el('p', 'av-resultado');
       botao.addEventListener('click', function () {
-        if (ficha[chave] !== null) return;
+        if (ficha[chave] !== null || dadoOcupado) return;
+        dadoOcupado = true;
         botao.disabled = true;
         rolarDado(dadoLivre, function (valor) {
+          dadoOcupado = false;
           ficha[chave] = valor + 6;
           salvarFicha();
           atualizarFicha();
@@ -510,10 +528,11 @@
     botaoPen.type = 'button';
 
     // no digital ninguém declara "ainda tenho energia": os dois caminhos
-    // ficam escondidos e o jogo mostra o certo depois de anotar o golpe
+    // ficam escondidos SEMPRE (mesmo recarregando) e o jogo mostra só o
+    // certo depois do golpe anotado
     var linksPenSeguir = [];
     var linksPenDerrota = [];
-    if (ficha[penalidadeDaPagina.stat] !== null && !localStorage.getItem(chavePenalidade)) {
+    if (ficha[penalidadeDaPagina.stat] !== null) {
       var saidasPen = document.querySelectorAll('.caixaBotao a.botao');
       for (var lp = 0; lp < saidasPen.length; lp++) {
         var hrefPen = saidasPen[lp].getAttribute('href') || '';
@@ -524,6 +543,14 @@
         } else {
           linksPenSeguir.push(saidasPen[lp]);
         }
+      }
+      // (1) saída escondida na imagem também não fura o golpe:
+      // desembrulha o link e deixa só o quadrinho
+      var linksImagemPen = document.querySelectorAll('.imagem a');
+      for (var li2 = 0; li2 < linksImagemPen.length; li2++) {
+        var aPen = linksImagemPen[li2];
+        while (aPen.firstChild) aPen.parentNode.insertBefore(aPen.firstChild, aPen);
+        aPen.remove();
       }
     }
 
@@ -666,6 +693,7 @@
         msgCaflito.className = 'av-caflito-msg vitoria';
         msgCaflito.textContent = '🎉 VOCÊ VENCEU O CAFLITO!';
         botaoRodada.disabled = true;
+        localStorage.setItem(PREFIXO_VENCIDO + pagina, '1');
         terminarLuta(true);
       }
     }
@@ -786,12 +814,14 @@
     tourAlvos.treinoVs = vsTreino;
     tourAlvos.treinoBotao = botaoTreino;
 
-    // no digital, vencer o treino é obrigatório: o botão da história
-    // fica escondido até a estátua cair
-    var linksTreino = document.querySelectorAll('.caixaBotao a.botao');
-    for (var lt = 0; lt < linksTreino.length; lt++) {
-      if ((linksTreino[lt].getAttribute('href') || '').indexOf('pagina1.html') >= 0) {
-        linksTreino[lt].style.display = 'none';
+    // no digital, vencer o treino é obrigatório: o botão da história fica
+    // escondido até a estátua cair — mas vitória salva não se perde no F5
+    if (!localStorage.getItem(CHAVE_TREINO)) {
+      var linksTreino = document.querySelectorAll('.caixaBotao a.botao');
+      for (var lt = 0; lt < linksTreino.length; lt++) {
+        if ((linksTreino[lt].getAttribute('href') || '').indexOf('pagina1.html') >= 0) {
+          linksTreino[lt].style.display = 'none';
+        }
       }
     }
 
@@ -813,6 +843,7 @@
         msgTreino.className = 'av-caflito-msg vitoria';
         msgTreino.textContent = '🎉 VOCÊ VENCEU O TREINO! Agora sim: pra aventura!';
         botaoTreino.disabled = true;
+        localStorage.setItem(CHAVE_TREINO, '1');
         destacarContinuarTreino();
         // treinou = aprendeu: o primeiro caflito real não repete os balões
         localStorage.setItem(TOUR_CAFLITO, '1');
@@ -896,6 +927,8 @@
     });
 
     atualizarTreino();
+    // treino já vencido antes: a porta da história continua aberta
+    if (localStorage.getItem(CHAVE_TREINO)) destacarContinuarTreino();
   }
 
   // --- seção: dado livre (nos dois modos; no papel é a estrela do painel) ---
@@ -911,7 +944,6 @@
   var avisoDado = el('p', 'av-aviso');
   var resultadoDado = el('p', 'av-resultado');
   var dadoLiberado = !modoDigital || progresso >= 2;
-  var dadoOcupado = false;
   if (dadoLiberado) {
     dadoLivre.classList.add('clicavel');
     dadoLivre.setAttribute('role', 'button');
@@ -935,9 +967,11 @@
   var botaoReset = el('button', 'av-botao av-nova-aventura', '🔄 Começar uma nova aventura');
   botaoReset.type = 'button';
   var confirmandoReset = false;
+  var resetArmadoEm = 0;
   botaoReset.addEventListener('click', function () {
     if (!confirmandoReset) {
       confirmandoReset = true;
+      resetArmadoEm = Date.now();
       botaoReset.textContent = 'Tem certeza? Isso apaga a ficha! (clique de novo)';
       setTimeout(function () {
         confirmandoReset = false;
@@ -945,6 +979,8 @@
       }, 4000);
       return;
     }
+    // duplo-clique acidental não conta como confirmação
+    if (Date.now() - resetArmadoEm < 500) return;
     // apaga TUDO do jogo: ficha (com o nome), luta, progresso, modo,
     // balõezinhos já vistos... a próxima aventura começa do zerinho
     Object.keys(localStorage).forEach(function (chave) {
@@ -1323,6 +1359,23 @@
     blocoTeste.appendChild(resultadoTeste);
     caixaDeBotoes().insertBefore(blocoTeste, caixaDeBotoes().firstChild);
 
+    function mostrarResultadoTeste(passou, texto) {
+      botaoTeste.style.display = 'none';
+      resultadoTeste.textContent = texto;
+      resultadoTeste.style.color = passou ? '#2e7d32' : '#d43a2f';
+      var linkTesteFeito = el('a', 'botao ' + (passou ? 'av-caminho-vitoria' : 'av-caminho-derrota'));
+      linkTesteFeito.href = passou ? teste.menorIgual : teste.maior;
+      linkTesteFeito.textContent = 'Clique pra ver o que acontece ➜';
+      blocoTeste.appendChild(linkTesteFeito);
+    }
+
+    // teste já feito antes (nada de re-rolar com F5!)
+    var testeSalvo = localStorage.getItem(PREFIXO_TESTE + pagina);
+    if (testeSalvo) {
+      mostrarResultadoTeste(testeSalvo === 'passou',
+        testeSalvo === 'passou' ? 'Você já fez este teste: 😅 conseguiu!' : 'Você já fez este teste: 😬 não deu...');
+    }
+
     botaoTeste.addEventListener('click', function () {
       if (ficha.ataque === null) {
         resultadoTeste.textContent = 'Primeiro crie o seu herói (é só recomeçar pela capa)!';
@@ -1338,14 +1391,9 @@
           rolarDado(dadoTeste2, function (d2) {
             var total = d1 + d2;
             var passou = total <= ficha.ataque;
-            botaoTeste.style.display = 'none';
-            resultadoTeste.textContent = 'Deu ' + d1 + ' + ' + d2 + ' = ' + total + '. Seu ATAQUE é ' + ficha.ataque + '. ' +
-              (passou ? '😅 MENOR ou IGUAL: conseguiu!' : '😬 MAIOR que o seu ATAQUE... xiii!');
-            resultadoTeste.style.color = passou ? '#2e7d32' : '#d43a2f';
-            var linkTeste = el('a', 'botao ' + (passou ? 'av-caminho-vitoria' : 'av-caminho-derrota'));
-            linkTeste.href = passou ? teste.menorIgual : teste.maior;
-            linkTeste.textContent = 'Clique pra ver o que acontece ➜';
-            blocoTeste.appendChild(linkTeste);
+            localStorage.setItem(PREFIXO_TESTE + pagina, passou ? 'passou' : 'falhou');
+            mostrarResultadoTeste(passou, 'Deu ' + d1 + ' + ' + d2 + ' = ' + total + '. Seu ATAQUE é ' + ficha.ataque + '. ' +
+              (passou ? '😅 MENOR ou IGUAL: conseguiu!' : '😬 MAIOR que o seu ATAQUE... xiii!'));
           });
         }, 700);
       });
@@ -1369,34 +1417,48 @@
     blocoTraducao.appendChild(resultadoTraducao);
     caixaDeBotoes().insertBefore(blocoTraducao, caixaDeBotoes().firstChild);
 
+    function mostrarTraducao(v, aviso) {
+      botaoTraducao.style.display = 'none';
+      resultadoTraducao.textContent = aviso + 'Deu ' + v + '!';
+      var linkTraducao = el('a', 'botao av-caminho-vitoria');
+      linkTraducao.href = v <= 2 ? './traducao1.html' : (v <= 4 ? './traducao2.html' : './traducao3.html');
+      linkTraducao.textContent = 'Ver a tradução ➜';
+      blocoTraducao.appendChild(linkTraducao);
+    }
+
+    var traducaoSalva = parseInt(localStorage.getItem(PREFIXO_TESTE + pagina), 10);
+    if (traducaoSalva) mostrarTraducao(traducaoSalva, 'Você já jogou o dado: ');
+
     botaoTraducao.addEventListener('click', function () {
       botaoTraducao.disabled = true;
       rolarDado(dadoTraducao, function (v) {
-        botaoTraducao.style.display = 'none';
-        resultadoTraducao.textContent = 'Deu ' + v + '!';
-        var linkTraducao = el('a', 'botao av-caminho-vitoria');
-        linkTraducao.href = v <= 2 ? './traducao1.html' : (v <= 4 ? './traducao2.html' : './traducao3.html');
-        linkTraducao.textContent = 'Ver a tradução ➜';
-        blocoTraducao.appendChild(linkTraducao);
+        localStorage.setItem(PREFIXO_TESTE + pagina, String(v));
+        mostrarTraducao(v, '');
       });
     });
   }
 
-  // --- arremessos contra o tiranossauro: só o que está na mochila ---
-  if (modoDigital && fichaJogavel && pagina === 'tiranossauroJogar1.html') {
-    var linksArremesso = document.querySelectorAll('.caixaBotao a');
-    for (var la = 0; la < linksArremesso.length; la++) {
-      var alvoHref = (linksArremesso[la].getAttribute('href') || '').replace('./', '');
-      var itemPreciso = ARREMESSOS[alvoHref];
+  // --- opções que exigem item na mochila (arremessos, isqueiro etc.) ---
+  if (modoDigital && fichaJogavel && TRAVAS_DE_ITEM[pagina]) {
+    var travas = TRAVAS_DE_ITEM[pagina];
+    var linksTravaveis = document.querySelectorAll('.caixaBotao a');
+    for (var la = 0; la < linksTravaveis.length; la++) {
+      var alvoHref = (linksTravaveis[la].getAttribute('href') || '').replace('./', '');
+      var itemPreciso = travas[alvoHref];
+      var nota = null;
       if (itemPreciso && ficha.itens.indexOf(itemPreciso) < 0) {
-        linksArremesso[la].classList.add('botaoDesabilitado');
-        linksArremesso[la].appendChild(el('span', 'notaMochila', ' (não está na mochila 🎒)'));
-        linksArremesso[la].addEventListener('click', function (ev) { ev.preventDefault(); });
+        nota = ' (não está na mochila 🎒)';
       } else if (alvoHref === 'jogarGranada.html' && localStorage.getItem(CHAVE_GRANADA)) {
         // a pegadinha só cola uma vez: o narrador tá de olho
-        linksArremesso[la].classList.add('botaoDesabilitado');
-        linksArremesso[la].appendChild(el('span', 'notaMochila', ' (o narrador confiscou! 👀)'));
-        linksArremesso[la].addEventListener('click', function (ev) { ev.preventDefault(); });
+        nota = ' (o narrador confiscou! 👀)';
+      } else if (alvoHref === 'jogarNada.html' &&
+          ['carne', 'pedra', 'cola'].some(function (id) { return ficha.itens.indexOf(id) >= 0; })) {
+        nota = ' (olha a mochila: tem coisa pra jogar! 🎒)';
+      }
+      if (nota) {
+        linksTravaveis[la].classList.add('botaoDesabilitado');
+        linksTravaveis[la].appendChild(el('span', 'notaMochila', nota));
+        linksTravaveis[la].addEventListener('click', function (ev) { ev.preventDefault(); });
       }
     }
   }
@@ -1456,7 +1518,7 @@
     if (moldura) {
       var selo = el('span', 'dicaClique', '👆 Aperte na imagem!');
       moldura.appendChild(selo);
-      moldura.addEventListener('click', function () {
+      imagemQueTroca.addEventListener('click', function () {
         selo.textContent = '👆 Aperte de novo pra continuar!';
       }, { once: true });
     }
@@ -1537,7 +1599,7 @@
       }
       iniciarTour(TOUR_FICHA, [
         { alvo: tourAlvos.ficha || painel, texto: 'Tcharam! ✨ Essa é a sua Ficha de Aventura digital! Ela vai ficar aqui do ladinho, guardando seu nome e seus poderes durante a jornada inteira.' },
-        { alvo: tourAlvos.nome || painel, texto: 'Agora me conta: qual é o nome do seu herói? Escreva aqui nessa caixinha — pode ser o SEU nome!', esperarTexto: true, botaoPronto: 'Vamos lá!', textoPular: 'Não quero nome... Vou ser o Didiana Jones!', dica: '👆 Escreva o nome na caixinha brilhando!' }
+        { alvo: tourAlvos.nome || painel, texto: 'Agora me conta: qual é o nome do seu herói? Escreva aqui nessa caixinha — pode ser o SEU nome!', esperarTexto: true, botaoPronto: 'Vamos lá!', textoPular: 'Não quero nome... Vou ser o Didiana Jones!', dica: '👆 Escreva o nome na caixinha brilhando!', pular: function () { return !!(ficha.nome || '').trim(); } }
       ], function () {
         if ((ficha.nome || '').trim()) {
           // com nome, os poderes são sorteados aqui mesmo: uma página a menos
