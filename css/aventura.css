@@ -706,3 +706,13 @@ body.av-tour .av-painel {
 .av-caflito-titulo.entrando {
   animation: av-entrada-inimigo 0.7s ease-out backwards;
 }
+
+/* durante o tour, só o alvo destacado do passo aceita cliques —
+   nada de atacar antes do balão certo! */
+body.av-tour .av-painel {
+  pointer-events: none;
+}
+
+body.av-tour .av-painel .av-tour-alvo {
+  pointer-events: auto;
+}
