@@ -17,7 +17,7 @@
 <body>
   <div class="bg">
     <form>
-      <input type="button" value="Voltar para o CAFLITO" class="botao" onclick="history.back()">
+      <input type="button" value="Voltar para o CAFLITO" class="botao" onclick="if (history.length > 1) { history.back(); } else { location.href = './index.html'; }">
      </form>
     <div class="texto">
       <h1>CAFLITO!</h1>
@@ -99,7 +99,7 @@
     </div>
     <div class="caixaBotao">
       <form>
-        <input type="button" value="Voltar para o CAFLITO" class="botao" onclick="history.back()">
+        <input type="button" value="Voltar para o CAFLITO" class="botao" onclick="if (history.length > 1) { history.back(); } else { location.href = './index.html'; }">
        </form>
     </div>
   </div>
