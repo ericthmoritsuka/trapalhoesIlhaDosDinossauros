@@ -197,9 +197,10 @@
 
   var caflito = lerJson(CHAVE_CAFLITO);
   if (inimigoDaPagina && modoDigital) {
-    // chegou numa página de caflito: começa (ou continua) a luta dela;
-    // luta já vencida antes = luta nova (nada de vitória de graça)
-    if (!caflito || caflito.pagina !== pagina || caflito.energiaInimigo <= 0) {
+    // chegou numa página de caflito: começa (ou continua) a luta dela.
+    // Luta vencida FICA vencida (voltar pra cá não ressuscita o monstro);
+    // derrota limpa o registro e a capa zera tudo entre aventuras.
+    if (!caflito || caflito.pagina !== pagina) {
       caflito = { pagina: pagina, energiaInimigo: inimigoDaPagina.energia };
       localStorage.setItem(CHAVE_CAFLITO, JSON.stringify(caflito));
     }
@@ -251,6 +252,19 @@
 
   var tourAlvos = {};
 
+  function criarAjudaDeLuta(secao) {
+    var botaoAjuda = el('button', 'av-ajuda', '?');
+    botaoAjuda.type = 'button';
+    botaoAjuda.setAttribute('aria-label', 'Como funciona o caflito?');
+    var textoAjuda = el('div', 'av-ajuda-texto',
+      'Cada um joga um dado e soma o seu ATAQUE. Quem fizer <b>MENOS</b> perde 1 coração ❤️ (empate: ninguém perde). Quem ficar sem corações primeiro perde o CAFLITO!');
+    botaoAjuda.addEventListener('click', function () {
+      textoAjuda.classList.toggle('aberta');
+    });
+    secao.appendChild(botaoAjuda);
+    secao.appendChild(textoAjuda);
+  }
+
   var painel = el('aside', 'av-painel' + (modoDigital ? '' : ' papel'));
   painel.appendChild(el('h2', null, modoDigital ? '🎒 Ficha de Aventura' : '🎲 Seu Dado'));
 
@@ -265,9 +279,20 @@
     var tituloFicha = el('div', 'av-secao-titulo', 'Didiana Jones');
     secFicha.appendChild(tituloFicha);
 
+    var ajustarCampoNome = function () {
+      var tem = !!(ficha.nome || '').trim();
+      if (!tem || document.activeElement === inputNome) {
+        inputNome.style.display = '';
+      } else {
+        inputNome.style.display = 'none';
+      }
+    };
+
     atualizarTitulo = function () {
       var nome = (ficha.nome || '').trim();
-      tituloFicha.textContent = nome ? '⭐ ' + nome + ' ⭐' : 'Didiana Jones';
+      tituloFicha.textContent = nome ? '⭐ ' + nome + ' ⭐ ' : 'Didiana Jones';
+      if (nome) tituloFicha.appendChild(el('span', 'av-editar', '✏️'));
+      ajustarCampoNome();
     };
 
     inputNome = el('input', 'av-nome');
@@ -287,6 +312,13 @@
     });
     secFicha.appendChild(inputNome);
     tourAlvos.nome = inputNome;
+    // clicar no nome (ou no lapisinho) reabre o campo pra corrigir
+    tituloFicha.addEventListener('click', function () {
+      if (!(ficha.nome || '').trim()) return;
+      inputNome.style.display = '';
+      inputNome.focus();
+    });
+    inputNome.addEventListener('blur', function () { ajustarCampoNome(); });
     atualizarTitulo();
 
     var stats = el('div', 'av-stats');
@@ -347,9 +379,10 @@
     };
   }
 
-  // --- seção: mochila (recolhível; aparece quando tem itens guardados) ---
+  // --- seção: mochila (recolhível; da história em diante fica sempre à
+  // mão, mesmo que os itens acabem — o chicote nunca sai de lá) ---
   var atualizarMochila = function () {};
-  if (modoDigital && (ficha.itens.length || pagina === PAGINA_ITENS)) {
+  if (modoDigital && (progresso >= 2 || pagina === PAGINA_ITENS || ficha.itens.length)) {
     var secMochila = el('section', 'av-secao');
     var botaoMochila = el('button', 'av-botao', '🎒 Abrir a mochila');
     botaoMochila.type = 'button';
@@ -459,10 +492,35 @@
       ' de ' + penalidadeDaPagina.stat.toUpperCase());
     botaoPen.type = 'button';
 
+    // no digital ninguém declara "ainda tenho energia": os dois caminhos
+    // ficam escondidos e o jogo mostra o certo depois de anotar o golpe
+    var linksPenSeguir = [];
+    var linksPenDerrota = [];
+    if (ficha[penalidadeDaPagina.stat] !== null && !localStorage.getItem(chavePenalidade)) {
+      var saidasPen = document.querySelectorAll('.caixaBotao a.botao');
+      for (var lp = 0; lp < saidasPen.length; lp++) {
+        var hrefPen = saidasPen[lp].getAttribute('href') || '';
+        if (hrefPen.indexOf('reExplicandoCaflito') >= 0) continue;
+        saidasPen[lp].style.display = 'none';
+        if (hrefPen === './' || hrefPen.indexOf('index.html') >= 0) {
+          linksPenDerrota.push(saidasPen[lp]);
+        } else {
+          linksPenSeguir.push(saidasPen[lp]);
+        }
+      }
+    }
+
     function marcarPenalidadeFeita() {
       botaoPen.disabled = true;
       botaoPen.classList.remove('destaque');
       botaoPen.textContent = '✔ Já anotei na ficha!';
+      var morreu = penalidadeDaPagina.stat === 'energia' && ficha.energia === 0;
+      var mostrar = morreu ? linksPenDerrota : linksPenSeguir;
+      var classe = morreu ? 'av-caminho-derrota' : 'av-caminho-vitoria';
+      for (var lm = 0; lm < mostrar.length; lm++) {
+        mostrar[lm].style.display = '';
+        mostrar[lm].classList.add(classe);
+      }
     }
 
     if (localStorage.getItem(chavePenalidade)) marcarPenalidadeFeita();
@@ -479,14 +537,6 @@
       mudarStat(penalidadeDaPagina.stat, -penalidadeDaPagina.pontos);
       localStorage.setItem(chavePenalidade, '1');
       marcarPenalidadeFeita();
-      // ficou sem energia? destaca o caminho do recomeço
-      if (penalidadeDaPagina.stat === 'energia' && ficha.energia === 0) {
-        var links = document.querySelectorAll('a.botao');
-        for (var li = 0; li < links.length; li++) {
-          var h = links[li].getAttribute('href') || '';
-          if (h === './' || h.indexOf('index.html') >= 0) links[li].classList.add('av-caminho-derrota');
-        }
-      }
     });
     secPen.appendChild(botaoPen);
     painel.appendChild(secPen);
@@ -540,9 +590,36 @@
 
     var msgCaflito = el('p', 'av-caflito-msg');
     secCaflito.appendChild(msgCaflito);
+    criarAjudaDeLuta(secCaflito);
     painel.appendChild(secCaflito);
     tourAlvos.caflitoVs = vs;
     tourAlvos.caflitoBotao = botaoRodada;
+
+    // no digital ninguém "declara" vitória: os caminhos de saída ficam
+    // escondidos até a luta terminar de verdade no painel
+    var avisoLuta = null;
+    if (ficha.ataque !== null && ficha.energia !== null) {
+      var saidas = document.querySelectorAll('.caixaBotao a.botao');
+      var escondeuSaida = false;
+      for (var sl = 0; sl < saidas.length; sl++) {
+        var hrefSaida = saidas[sl].getAttribute('href') || '';
+        if (hrefSaida.indexOf('reExplicandoCaflito') >= 0) {
+          // no digital o "?" do painel reexplica a luta; o manual é do papel
+          saidas[sl].style.display = 'none';
+          continue;
+        }
+        if (hrefSaida.indexOf(inimigoDaPagina.vitoria) >= 0 ||
+            hrefSaida === './' || hrefSaida.indexOf('index.html') >= 0) {
+          saidas[sl].style.display = 'none';
+          escondeuSaida = true;
+        }
+      }
+      if (escondeuSaida) {
+        avisoLuta = el('p', 'bold', '⚔️ Vença o CAFLITO no painel pra continuar a história!');
+        var caixaLuta = document.querySelector('.caixaBotao');
+        if (caixaLuta) caixaLuta.insertBefore(avisoLuta, caixaLuta.firstChild);
+      }
+    }
 
     function destacarCaminho(vitoria) {
       var links = document.querySelectorAll('a.botao');
@@ -550,10 +627,17 @@
         var href = links[i].getAttribute('href') || '';
         if (vitoria && href.indexOf(inimigoDaPagina.vitoria) >= 0) {
           links[i].classList.add('av-caminho-vitoria');
+          links[i].style.display = '';
         }
         if (!vitoria && (href === './' || href.indexOf('index.html') >= 0)) {
           links[i].classList.add('av-caminho-derrota');
+          links[i].style.display = '';
         }
+      }
+      if (avisoLuta) {
+        avisoLuta.textContent = vitoria
+          ? '🎉 Vitória! Agora sim, siga em frente:'
+          : '😵 Você foi derrotado... mas herói de verdade tenta de novo:';
       }
     }
 
@@ -687,17 +771,28 @@
     botaoTreinarDeNovo.type = 'button';
     botaoTreinarDeNovo.style.display = 'none';
     secTreino.appendChild(botaoTreinarDeNovo);
+    criarAjudaDeLuta(secTreino);
     // primeira seção do painel: o treino é a estrela desta página
     painel.insertBefore(secTreino, painel.children[1] || null);
 
     tourAlvos.treinoVs = vsTreino;
     tourAlvos.treinoBotao = botaoTreino;
 
+    // no digital, vencer o treino é obrigatório: o botão da história
+    // fica escondido até a estátua cair
+    var linksTreino = document.querySelectorAll('.caixaBotao a.botao');
+    for (var lt = 0; lt < linksTreino.length; lt++) {
+      if ((linksTreino[lt].getAttribute('href') || '').indexOf('pagina1.html') >= 0) {
+        linksTreino[lt].style.display = 'none';
+      }
+    }
+
     function destacarContinuarTreino() {
       var links = document.querySelectorAll('a.botao');
       for (var i = 0; i < links.length; i++) {
         if ((links[i].getAttribute('href') || '').indexOf('pagina1.html') >= 0) {
           links[i].classList.add('av-caminho-vitoria');
+          links[i].style.display = '';
         }
       }
     }
@@ -1335,6 +1430,19 @@
       });
     }
     montarPedra();
+  }
+
+  // selo "aperte na imagem" nas figuras que trocam com o clique
+  var imagemQueTroca = document.querySelector('.js .jsImagem');
+  if (imagemQueTroca) {
+    var moldura = imagemQueTroca.closest('.imagem');
+    if (moldura) {
+      var selo = el('span', 'dicaClique', '👆 Aperte na imagem!');
+      moldura.appendChild(selo);
+      moldura.addEventListener('click', function () {
+        selo.textContent = '👆 Aperte de novo pra continuar!';
+      }, { once: true });
+    }
   }
 
   /* ---------- botão flutuante ---------- */
