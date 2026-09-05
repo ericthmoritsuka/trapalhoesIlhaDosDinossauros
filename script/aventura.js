@@ -24,6 +24,7 @@
   var PREFIXO_PENALIDADE = 'trapalhoes.penalidade.';
   // (a marca de penalidade fica no localStorage, junto com a ficha)
   var CHAVE_PROGRESSO = 'trapalhoes.progresso.v1';
+  var CHAVE_GRANADA = 'trapalhoes.granada.v1';
   var TOUR_FICHA = 'trapalhoes.tour.ficha.v1';
   var TOUR_CRIACAO = 'trapalhoes.tour.criacao.v1';
   var TOUR_CAFLITO = 'trapalhoes.tour.caflito.v1';
@@ -140,6 +141,7 @@
   // voltar pra capa = recomeçar a aventura: limpa a luta e os golpes anotados
   if (pagina === 'index.html') {
     localStorage.removeItem(CHAVE_CAFLITO);
+    localStorage.removeItem(CHAVE_GRANADA);
     Object.keys(localStorage).forEach(function (chave) {
       if (chave.indexOf(PREFIXO_PENALIDADE) === 0) localStorage.removeItem(chave);
     });
@@ -183,6 +185,7 @@
       if (posIsqueiro >= 0) { ficha.itens.splice(posIsqueiro, 1); mudouMochila = true; }
       if (ficha.itens.indexOf('tacape') < 0) { ficha.itens.push('tacape'); mudouMochila = true; }
     }
+    if (pagina === 'jogarGranada.html') localStorage.setItem(CHAVE_GRANADA, '1');
     var GASTOS = { 'jogarCarne.html': 'carne', 'jogarPedra.html': 'pedra', 'jogarCola.html': 'cola' };
     if (GASTOS[pagina]) {
       var posGasto = ficha.itens.indexOf(GASTOS[pagina]);
@@ -1379,6 +1382,11 @@
       if (itemPreciso && ficha.itens.indexOf(itemPreciso) < 0) {
         linksArremesso[la].classList.add('botaoDesabilitado');
         linksArremesso[la].appendChild(el('span', 'notaMochila', ' (não está na mochila 🎒)'));
+        linksArremesso[la].addEventListener('click', function (ev) { ev.preventDefault(); });
+      } else if (alvoHref === 'jogarGranada.html' && localStorage.getItem(CHAVE_GRANADA)) {
+        // a pegadinha só cola uma vez: o narrador tá de olho
+        linksArremesso[la].classList.add('botaoDesabilitado');
+        linksArremesso[la].appendChild(el('span', 'notaMochila', ' (o narrador confiscou! 👀)'));
         linksArremesso[la].addEventListener('click', function (ev) { ev.preventDefault(); });
       }
     }
