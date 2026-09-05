@@ -382,6 +382,20 @@
     };
   }
 
+  // --- modo papel: ficha digital salva vira colinha pra copiar na folha ---
+  if (!modoDigital && (ficha.ataque !== null || ficha.itens.length)) {
+    var secColinha = el('section', 'av-secao');
+    secColinha.appendChild(el('div', 'av-secao-titulo', '📋 Sua ficha digital'));
+    var linhaColinha = 'ATAQUE ' + (ficha.ataque === null ? '?' : ficha.ataque) +
+      ' · ENERGIA ' + (ficha.energia === null ? '?' : ficha.energia);
+    if (ficha.itens.length) {
+      linhaColinha += ' · ' + ficha.itens.map(function (id) { return itemPorId(id).nome; }).join(', ');
+    }
+    secColinha.appendChild(el('p', 'av-resultado', linhaColinha));
+    secColinha.appendChild(el('p', 'av-aviso', 'Copie pra sua folha antes de seguir no papel!'));
+    painel.appendChild(secColinha);
+  }
+
   // --- seção: mochila (recolhível; da história em diante fica sempre à
   // mão, mesmo que os itens acabem — o chicote nunca sai de lá) ---
   var atualizarMochila = function () {};
@@ -533,7 +547,7 @@
     if (ficha[penalidadeDaPagina.stat] === null) {
       botaoPen.disabled = true;
       botaoPen.classList.remove('destaque');
-      botaoPen.textContent = 'Crie seu herói primeiro!';
+      botaoPen.textContent = 'Anote seu ATAQUE e ENERGIA na ficha primeiro!';
     }
 
     botaoPen.addEventListener('click', function () {
@@ -598,50 +612,40 @@
     tourAlvos.caflitoVs = vs;
     tourAlvos.caflitoBotao = botaoRodada;
 
-    // no digital ninguém "declara" vitória: os caminhos de saída ficam
-    // escondidos até a luta terminar de verdade no painel
+    // no digital os botões do papel ("EU VENCI!!!" etc.) NUNCA aparecem:
+    // o jogo cria o único botão certo quando a luta termina de verdade
+    var caixaLuta = document.querySelector('.caixaBotao');
     var avisoLuta = null;
-    if (ficha.ataque !== null && ficha.energia !== null) {
-      var saidas = document.querySelectorAll('.caixaBotao a.botao');
-      var escondeuSaida = false;
-      for (var sl = 0; sl < saidas.length; sl++) {
-        var hrefSaida = saidas[sl].getAttribute('href') || '';
-        if (hrefSaida.indexOf('reExplicandoCaflito') >= 0) {
-          // no digital o "?" do painel reexplica a luta; o manual é do papel
-          saidas[sl].style.display = 'none';
-          continue;
-        }
-        if (hrefSaida.indexOf(inimigoDaPagina.vitoria) >= 0 ||
-            hrefSaida === './' || hrefSaida.indexOf('index.html') >= 0) {
-          saidas[sl].style.display = 'none';
-          escondeuSaida = true;
-        }
-      }
-      if (escondeuSaida) {
-        avisoLuta = el('p', 'bold', '⚔️ Vença o CAFLITO no painel pra continuar a história!');
-        var caixaLuta = document.querySelector('.caixaBotao');
-        if (caixaLuta) caixaLuta.insertBefore(avisoLuta, caixaLuta.firstChild);
+    var saidaCriada = false;
+    var saidas = document.querySelectorAll('.caixaBotao a.botao');
+    for (var sl = 0; sl < saidas.length; sl++) {
+      saidas[sl].style.display = 'none';
+    }
+    if (caixaLuta) {
+      var fichaPronta = ficha.ataque !== null && ficha.energia !== null;
+      avisoLuta = el('p', 'bold', fichaPronta
+        ? '⚔️ Vença o CAFLITO no painel pra continuar a história!'
+        : '⚠️ Você ainda não criou o seu herói!');
+      caixaLuta.insertBefore(avisoLuta, caixaLuta.firstChild);
+      if (!fichaPronta) {
+        var linkCriar = el('a', 'botao', 'Criar meu herói (recomeçar pela capa) ➜');
+        linkCriar.href = './';
+        caixaLuta.appendChild(linkCriar);
       }
     }
 
-    function destacarCaminho(vitoria) {
-      var links = document.querySelectorAll('a.botao');
-      for (var i = 0; i < links.length; i++) {
-        var href = links[i].getAttribute('href') || '';
-        if (vitoria && href.indexOf(inimigoDaPagina.vitoria) >= 0) {
-          links[i].classList.add('av-caminho-vitoria');
-          links[i].style.display = '';
-        }
-        if (!vitoria && (href === './' || href.indexOf('index.html') >= 0)) {
-          links[i].classList.add('av-caminho-derrota');
-          links[i].style.display = '';
-        }
-      }
+    function terminarLuta(vitoria) {
       if (avisoLuta) {
         avisoLuta.textContent = vitoria
           ? '🎉 Vitória! Agora sim, siga em frente:'
-          : '😵 Você foi derrotado... mas herói de verdade tenta de novo:';
+          : '😵 Suas energias acabaram... mas herói de verdade tenta de novo:';
       }
+      if (saidaCriada || !caixaLuta) return;
+      saidaCriada = true;
+      var linkFim = el('a', 'botao ' + (vitoria ? 'av-caminho-vitoria' : 'av-caminho-derrota'));
+      linkFim.href = vitoria ? './' + inimigoDaPagina.vitoria : './';
+      linkFim.textContent = vitoria ? 'Continuar a aventura ➜' : 'Recomeçar a aventura';
+      caixaLuta.appendChild(linkFim);
     }
 
     function atualizarCaflito() {
@@ -650,25 +654,26 @@
       atqHeroiEl.textContent = 'ATQ ' + (ficha.ataque === null ? '?' : ficha.ataque);
       heroi.firstChild.textContent = ficha.nome ? ficha.nome : 'Didiana';
 
-      if (caflito.energiaInimigo <= 0) {
-        msgCaflito.className = 'av-caflito-msg vitoria';
-        msgCaflito.textContent = '🎉 VOCÊ VENCEU O CAFLITO!';
-        botaoRodada.disabled = true;
-        destacarCaminho(true);
-      } else if (ficha.energia !== null && ficha.energia <= 0) {
+      if (ficha.energia !== null && ficha.energia <= 0) {
+        // sem energia é fim de jogo, mesmo que essa luta já estivesse ganha
         msgCaflito.className = 'av-caflito-msg derrota';
         msgCaflito.textContent = '😵 Você foi derrotado... Tente de novo!';
         botaoRodada.disabled = true;
-        destacarCaminho(false);
+        terminarLuta(false);
         // na próxima aventura o inimigo volta com toda a energia
         localStorage.removeItem(CHAVE_CAFLITO);
+      } else if (caflito.energiaInimigo <= 0) {
+        msgCaflito.className = 'av-caflito-msg vitoria';
+        msgCaflito.textContent = '🎉 VOCÊ VENCEU O CAFLITO!';
+        botaoRodada.disabled = true;
+        terminarLuta(true);
       }
     }
 
     botaoRodada.addEventListener('click', function () {
       if (ficha.ataque === null || ficha.energia === null) {
         msgCaflito.className = 'av-caflito-msg derrota';
-        msgCaflito.textContent = 'Primeiro anote seu ATAQUE e sua ENERGIA na ficha!';
+        msgCaflito.textContent = 'Sua ficha digital está vazia! Jogava no papel? Copie seu ATAQUE e ENERGIA com os botões + da ficha.';
         return;
       }
       botaoRodada.disabled = true;
@@ -1242,6 +1247,10 @@
 
   /* ---------- automações da história (modo digital) ---------- */
 
+  // quem chegou do papel (ficha digital vazia) mantém os botões manuais:
+  // as automações só assumem quando a ficha digital existe de verdade
+  var fichaJogavel = ficha.ataque !== null && ficha.energia !== null;
+
   function esconderLinksDaCaixa(hrefs) {
     // compara sem o "./" da frente: algumas páginas escrevem o link sem ele
     var alvos = hrefs.map(function (h) { return h.replace(/^\.\//, ''); });
@@ -1257,7 +1266,7 @@
   }
 
   // --- "você tem tal item?": a mochila responde sozinha ---
-  var checagem = modoDigital ? CHECAGENS[pagina] : null;
+  var checagem = (modoDigital && fichaJogavel) ? CHECAGENS[pagina] : null;
   if (checagem && caixaDeBotoes()) {
     esconderLinksDaCaixa([checagem.com, checagem.sem]);
     var itemChecado = itemPorId(checagem.item);
@@ -1294,7 +1303,7 @@
   }
 
   // --- teste de ATAQUE: dois dados contra a sua esperteza ---
-  var teste = modoDigital ? TESTES[pagina] : null;
+  var teste = (modoDigital && fichaJogavel) ? TESTES[pagina] : null;
   if (teste && caixaDeBotoes()) {
     esconderLinksDaCaixa([teste.menorIgual, teste.maior]);
     var blocoTeste = el('div', 'blocoAventura');
@@ -1344,7 +1353,7 @@
   }
 
   // --- dado da tradução (amigo2): 1-2, 3-4 ou 5-6 ---
-  if (modoDigital && pagina === 'amigo2.html' && caixaDeBotoes()) {
+  if (modoDigital && fichaJogavel && pagina === 'amigo2.html' && caixaDeBotoes()) {
     esconderLinksDaCaixa(['./traducao1.html', './traducao2.html', './traducao3.html']);
     var blocoTraducao = el('div', 'blocoAventura');
     blocoTraducao.appendChild(el('p', 'bold', 'Será que a tradução sai certa? Jogue o dado! 🎲'));
@@ -1374,7 +1383,7 @@
   }
 
   // --- arremessos contra o tiranossauro: só o que está na mochila ---
-  if (modoDigital && pagina === 'tiranossauroJogar1.html') {
+  if (modoDigital && fichaJogavel && pagina === 'tiranossauroJogar1.html') {
     var linksArremesso = document.querySelectorAll('.caixaBotao a');
     for (var la = 0; la < linksArremesso.length; la++) {
       var alvoHref = (linksArremesso[la].getAttribute('href') || '').replace('./', '');
@@ -1393,7 +1402,7 @@
   }
 
   // --- pedra azul (triceratopsVitoria1): pegar, trocar ou deixar ---
-  if (modoDigital && pagina === 'triceratopsVitoria1.html' && caixaDeBotoes()) {
+  if (modoDigital && fichaJogavel && pagina === 'triceratopsVitoria1.html' && caixaDeBotoes()) {
     var blocoPedra = el('div', 'blocoAventura');
     caixaDeBotoes().insertBefore(blocoPedra, caixaDeBotoes().firstChild);
 
@@ -1458,7 +1467,7 @@
   // no modo papel só chamamos atenção onde o dado é necessário
   var precisaAtencao = modoDigital
     ? (inimigoDaPagina || penalidadeDaPagina || pagina === PAGINA_CRIACAO || pagina === PAGINA_NOME || pagina === PAGINA_TREINO)
-    : (inimigoDaPagina || pagina === PAGINA_CRIACAO);
+    : (inimigoDaPagina || pagina === PAGINA_CRIACAO || !!TESTES[pagina] || pagina === 'amigo2.html');
 
   var toggle = el('button', 'av-toggle', '🎲<span class="av-toggle-alerta">!</span>');
   toggle.type = 'button';
@@ -1489,6 +1498,15 @@
   // a ficha digital só aparece quando o jogador escolhe esse modo
   if (pagina === 'index.html' || pagina === 'inicio.html') abrir = false;
   if (abrir) document.body.classList.add('av-aberto');
+
+  // rodapé de créditos
+  var rodape = el('footer', 'creditos');
+  var linkAutor = el('a', null, 'Eric Moritsuka');
+  linkAutor.href = 'https://ericthmoritsuka.github.io/';
+  rodape.appendChild(document.createTextNode('Desenvolvido por '));
+  rodape.appendChild(linkAutor);
+  rodape.appendChild(document.createTextNode(' · feito com assistência de IA'));
+  document.body.appendChild(rodape);
 
   document.body.appendChild(painel);
   document.body.appendChild(toggle);

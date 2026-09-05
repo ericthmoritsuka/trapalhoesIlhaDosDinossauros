@@ -389,3 +389,17 @@
 .js .jsImagem {
   cursor: pointer;
 }
+
+/* rodapé de créditos */
+.creditos {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #7a7461;
+  padding: 12px 0 90px;
+}
+
+.creditos a {
+  font-weight: 700;
+  color: var(--azul);
+  text-decoration: underline;
+}
