@@ -336,3 +336,56 @@
   font-size: 0.85rem;
   font-weight: 400;
 }
+
+/* selo "clique!" nos quadrinhos clicáveis: a dica é visual, na imagem */
+@keyframes pulsoClique {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.imagem a {
+  position: relative;
+  display: block;
+}
+
+.imagem a::after {
+  content: '👆 clique!';
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  background-color: var(--amarelo);
+  color: var(--tinta);
+  border: 2px solid var(--tinta);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 2px 2px 0 var(--tinta);
+  animation: pulsoClique 1.2s infinite;
+  pointer-events: none;
+}
+
+.imagem {
+  position: relative;
+}
+
+.dicaClique {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  background-color: var(--amarelo);
+  color: var(--tinta);
+  border: 2px solid var(--tinta);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 2px 2px 0 var(--tinta);
+  animation: pulsoClique 1.2s infinite;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.js .jsImagem {
+  cursor: pointer;
+}

@@ -716,3 +716,50 @@ body.av-tour .av-painel {
 body.av-tour .av-painel .av-tour-alvo {
   pointer-events: auto;
 }
+
+/* botãozinho "?" que reexplica a luta */
+.av-secao.caflito {
+  position: relative;
+}
+
+.av-ajuda {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--av-tinta);
+  background-color: var(--av-amarelo);
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.av-ajuda:hover {
+  background-color: #ffde73;
+}
+
+.av-ajuda-texto {
+  display: none;
+  font-size: 0.9rem;
+  background-color: #eaf1fb;
+  border: 2px dashed var(--av-azul);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  text-align: left;
+}
+
+.av-ajuda-texto.aberta {
+  display: block;
+}
+
+/* lapisinho pra editar o nome escolhido */
+.av-secao-titulo .av-editar {
+  font-size: 0.75em;
+  opacity: 0.55;
+  cursor: pointer;
+}
