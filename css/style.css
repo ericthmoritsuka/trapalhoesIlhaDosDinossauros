@@ -300,3 +300,39 @@
   color: var(--vermelho);
   min-height: 1.4em;
 }
+
+/* ---------- automações da história (checagens, testes, pedra azul) ---------- */
+
+.blocoAventura {
+  display: grid;
+  gap: 12px;
+  justify-items: stretch;
+  text-align: center;
+  background-color: #eaf1fb;
+  border: 3px dashed var(--azul);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.blocoAventura p {
+  margin: 0;
+}
+
+.testeDados {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  margin: 4px 0;
+}
+
+.botao.botaoDesabilitado {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.notaMochila {
+  font-size: 0.85rem;
+  font-weight: 400;
+}
