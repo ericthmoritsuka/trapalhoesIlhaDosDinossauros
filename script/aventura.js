@@ -55,7 +55,6 @@
   };
 
   var PAGINA_CRIACAO = 'criandoPersonagemAtaqueEnergia.html';
-  var PAGINA_NOME = 'criandoPersonagemNome.html';
   var PAGINA_ITENS = 'pagina3.html';
   var PAGINA_TREINO = 'explicandoCaflito.html';
 
@@ -134,10 +133,9 @@
   // progresso na criação do personagem: 0 = ainda não chegou lá,
   // 1 = já pode escrever o nome, 2 = já pode mexer em ATAQUE/ENERGIA e no dado.
   // Fora das páginas iniciais o jogo está rolando, então libera tudo.
-  var PAGINAS_INICIAIS = ['index.html', 'inicio.html', 'criandoPersonagemNome.html'];
+  var PAGINAS_INICIAIS = ['index.html', 'inicio.html'];
   var progresso = parseInt(localStorage.getItem(CHAVE_PROGRESSO), 10) || 0;
   if (PAGINAS_INICIAIS.indexOf(pagina) < 0) progresso = 2;
-  else if (pagina === PAGINA_NOME) progresso = Math.max(progresso, 1);
   localStorage.setItem(CHAVE_PROGRESSO, String(progresso));
 
   // voltar pra capa = recomeçar a aventura: limpa a luta e os golpes anotados
@@ -1003,37 +1001,6 @@
   });
   painel.appendChild(botaoModo);
 
-  /* ---------- nome escrito na própria página (modo digital) ---------- */
-
-  var nomePagina = document.querySelector('.js-nome-jogador');
-  var nomeEco = document.querySelector('.js-nome-eco');
-
-  function ecoDoNome() {
-    if (!nomeEco) return;
-    var nome = (ficha.nome || '').trim();
-    nomeEco.textContent = nome
-      ? '⭐ Prazer, ' + nome + '! Você é o herói desta aventura!'
-      : 'Sem nome? Sem problemas: seu herói será o Didiana Jones, o aventureiro destemido da revistinha!';
-  }
-
-  if (modoDigital && nomePagina) {
-    nomePagina.value = ficha.nome || '';
-    nomePagina.addEventListener('input', function () {
-      ficha.nome = nomePagina.value;
-      salvarFicha();
-      if (inputNome) inputNome.value = nomePagina.value;
-      atualizarTitulo();
-    });
-    nomePagina.addEventListener('input', ecoDoNome);
-    if (inputNome) {
-      inputNome.addEventListener('input', function () {
-        nomePagina.value = inputNome.value;
-        ecoDoNome();
-      });
-    }
-  }
-  ecoDoNome();
-
   /* ---------- tour de balõezinhos (modo digital) ---------- */
 
   function iniciarTour(chaveTour, passos, aoTerminar) {
@@ -1528,7 +1495,7 @@
 
   // no modo papel só chamamos atenção onde o dado é necessário
   var precisaAtencao = modoDigital
-    ? (inimigoDaPagina || penalidadeDaPagina || pagina === PAGINA_CRIACAO || pagina === PAGINA_NOME || pagina === PAGINA_TREINO)
+    ? (inimigoDaPagina || penalidadeDaPagina || pagina === PAGINA_CRIACAO || pagina === PAGINA_TREINO)
     : (inimigoDaPagina || pagina === PAGINA_CRIACAO || !!TESTES[pagina] || pagina === 'amigo2.html');
 
   var toggle = el('button', 'av-toggle', '🎲<span class="av-toggle-alerta">!</span>');
@@ -1601,22 +1568,23 @@
         { alvo: tourAlvos.ficha || painel, texto: 'Tcharam! ✨ Essa é a sua Ficha de Aventura digital! Ela vai ficar aqui do ladinho, guardando seu nome e seus poderes durante a jornada inteira.' },
         { alvo: tourAlvos.nome || painel, texto: 'Agora me conta: qual é o nome do seu herói? Escreva aqui nessa caixinha — pode ser o SEU nome!', esperarTexto: true, botaoPronto: 'Vamos lá!', textoPular: 'Não quero nome... Vou ser o Didiana Jones!', dica: '👆 Escreva o nome na caixinha brilhando!', pular: function () { return !!(ficha.nome || '').trim(); } }
       ], function () {
-        if ((ficha.nome || '').trim()) {
-          // com nome, os poderes são sorteados aqui mesmo: uma página a menos
-          if (tourAlvos.secCriacao) tourAlvos.secCriacao.style.display = '';
-          iniciarTour(TOUR_CRIACAO, passosCriacao());
-        } else {
-          // sem nome: vai conhecer o Didiana Jones
-          location.href = './criandoPersonagemNome.html';
+        // com ou sem nome, os poderes são sorteados aqui mesmo: sem nome o
+        // herói vira o Didiana Jones e o tour apresenta ele antes dos dados
+        if (tourAlvos.secCriacao) tourAlvos.secCriacao.style.display = '';
+        var passos = passosCriacao();
+        if (!(ficha.nome || '').trim()) {
+          passos.unshift({ alvo: tourAlvos.nome || tourAlvos.ficha, texto: 'Sem nome? Sem problemas: seu herói será o Didiana Jones, o aventureiro destemido da revistinha! E se mudar de ideia, a caixinha do nome continua aí na ficha.' });
         }
+        iniciarTour(TOUR_CRIACAO, passos);
       });
     });
   }
 
   // refresh no meio da criação no início: reabre o painel, mostra os
-  // poderes e retoma o tour de onde parou (a revelação já foi vista)
+  // poderes e retoma o tour de onde parou (a revelação já foi vista) —
+  // vale também pra quem ficou sem nome e vai jogar de Didiana Jones
   if (modoDigital && pagina === 'inicio.html' && localStorage.getItem(TOUR_FICHA) &&
-      (ficha.nome || '').trim() && (ficha.ataque === null || ficha.energia === null)) {
+      (ficha.ataque === null || ficha.energia === null)) {
     document.body.classList.add('av-aberto');
     if (tourAlvos.secCriacao) tourAlvos.secCriacao.style.display = '';
     localStorage.removeItem(TOUR_CRIACAO);
