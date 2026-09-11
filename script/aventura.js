@@ -33,6 +33,7 @@
   var CHAVE_TREINO = 'trapalhoes.treino.v1';
   var PREFIXO_TESTE = 'trapalhoes.teste.';
   var TOUR_PENALIDADE = 'trapalhoes.tour.penalidade.v1';
+  var TOUR_MOCHILA = 'trapalhoes.tour.mochila.v1';
 
   // inimigos de cada página de CAFLITO (valores tirados dos quadrinhos)
   var INIMIGOS = {
@@ -63,12 +64,18 @@
 
   // itens que dá pra escolher no guarda-roupa (página 3); o chicote vai sempre
   var ITENS = [
-    { id: 'manual', nome: 'Manual de Pilotagem', img: './img/glossario/manual de pilotagem.webp' },
-    { id: 'cola', nome: 'Cola-tudo', img: './img/glossario/cola tudo.webp' },
-    { id: 'estetoscopio', nome: 'Estetoscópio', img: './img/glossario/estetoscopio.webp' },
-    { id: 'isqueiro', nome: 'Isqueiro', img: './img/glossario/isqueiro.jpg' },
-    { id: 'veneno', nome: 'Mata-erva daninha', img: './img/glossario/mata-erva daninha.jpg' },
-    { id: 'carne', nome: 'Carne-seca', img: './img/glossario/carne seca.jpg' }
+    { id: 'manual', nome: 'Manual de Pilotagem', img: './img/glossario/manual de pilotagem.webp',
+      dica: 'Um livrinho que ensina, passo a passo, como pilotar um avião.' },
+    { id: 'cola', nome: 'Cola-tudo', img: './img/glossario/cola tudo.webp',
+      dica: 'Uma cola tão forte que gruda qualquer coisa quebrada num instante.' },
+    { id: 'estetoscopio', nome: 'Estetoscópio', img: './img/glossario/estetoscopio.webp',
+      dica: 'Aparelho de médico usado pra escutar o coração e outros barulhinhos escondidos.' },
+    { id: 'isqueiro', nome: 'Isqueiro', img: './img/glossario/isqueiro.jpg',
+      dica: 'Faz uma chaminha pra acender fogo. Coisa séria: criança não usa sozinha!' },
+    { id: 'veneno', nome: 'Mata-erva daninha', img: './img/glossario/mata-erva daninha.jpg',
+      dica: 'Um líquido de jardineiro que seca as plantas malvadas e perigosas.' },
+    { id: 'carne', nome: 'Carne-seca', img: './img/glossario/carne seca.jpg',
+      dica: 'Carne salgada e sequinha que dura muito sem estragar. Lanche... ou isca!' }
   ];
   var CHICOTE = { id: 'chicote', nome: 'Chicote', img: './img/glossario/chicote.jpg' };
   // itens que aparecem no meio da história (não dá pra escolher no começo)
@@ -421,6 +428,7 @@
     secMochila.appendChild(botaoMochila);
     secMochila.appendChild(listaMochila);
     painel.appendChild(secMochila);
+    tourAlvos.mochila = botaoMochila;
 
     botaoMochila.addEventListener('click', function () {
       listaMochila.classList.toggle('aberta');
@@ -798,6 +806,13 @@
     var msgTreino = el('p', 'av-caflito-msg');
     secTreino.appendChild(msgTreino);
 
+    // vitória no treino: a porta da aventura abre aqui mesmo, coladinha na
+    // luta — o botão lá embaixo da página só fica destacado por garantia
+    var linkAventuraTreino = el('a', 'av-botao verde', '🚀 Começar a aventura ➜');
+    linkAventuraTreino.href = './pagina1.html';
+    linkAventuraTreino.style.display = 'none';
+    secTreino.appendChild(linkAventuraTreino);
+
     var explicadorDeRodada = null;
     tourAlvos.explicarRodada = function (defineTexto) { explicadorDeRodada = defineTexto; };
 
@@ -840,6 +855,7 @@
       if (treinoEnergiaInimigo <= 0) {
         msgTreino.className = 'av-caflito-msg vitoria';
         msgTreino.textContent = '🎉 VOCÊ VENCEU O TREINO! Agora sim: pra aventura!';
+        linkAventuraTreino.style.display = '';
         botaoTreino.disabled = true;
         localStorage.setItem(CHAVE_TREINO, '1');
         destacarContinuarTreino();
@@ -926,7 +942,10 @@
 
     atualizarTreino();
     // treino já vencido antes: a porta da história continua aberta
-    if (localStorage.getItem(CHAVE_TREINO)) destacarContinuarTreino();
+    if (localStorage.getItem(CHAVE_TREINO)) {
+      destacarContinuarTreino();
+      linkAventuraTreino.style.display = '';
+    }
   }
 
   // --- seção: dado livre (nos dois modos; no papel é a estrela do painel) ---
@@ -1183,9 +1202,24 @@
       if (ficha.itens.length === 4) {
         avisoItens.textContent = '';
         contadorItens.style.color = '#2e7d32';
+        apresentarMochila();
       } else {
         contadorItens.style.color = '';
       }
+    }
+
+    // mochila completa: um balãozinho mostra onde os itens ficam guardados
+    // (o setTimeout deixa o resto do painel terminar de montar primeiro)
+    function apresentarMochila() {
+      if (!tourAlvos.mochila || localStorage.getItem(TOUR_MOCHILA)) return;
+      setTimeout(function () {
+        document.body.classList.add('av-aberto');
+        localStorage.setItem(CHAVE_ABERTO, '1');
+        ajustarToggle();
+        iniciarTour(TOUR_MOCHILA, [
+          { alvo: tourAlvos.mochila, texto: 'Mochila pronta! 🎒 Seus 4 itens ficam guardados aqui — e tudo o que você achar pela ilha também vai parar aqui dentro. Clique nela pra espiar quando quiser!' }
+        ]);
+      }, 0);
     }
 
     ITENS.forEach(function (item) {
@@ -1197,6 +1231,24 @@
       carta.appendChild(img);
       carta.appendChild(el('span', null, item.nome));
       carta.appendChild(el('span', 'marcado', '✔'));
+
+      // "?" abre a explicação do item sem escolher a carta
+      var ajudaItem = el('span', 'itemAjuda', '?');
+      ajudaItem.setAttribute('role', 'button');
+      ajudaItem.setAttribute('aria-label', 'O que é ' + item.nome + '?');
+      var textoAjudaItem = el('span', 'itemAjudaTexto', item.dica);
+      ajudaItem.addEventListener('click', function (ev) {
+        ev.stopPropagation();
+        // uma explicação aberta por vez, senão a grade vira um festival
+        var abertas = gradeItens.querySelectorAll('.itemAjudaTexto.aberta');
+        for (var a = 0; a < abertas.length; a++) {
+          if (abertas[a] !== textoAjudaItem) abertas[a].classList.remove('aberta');
+        }
+        textoAjudaItem.classList.toggle('aberta');
+      });
+      carta.appendChild(ajudaItem);
+      carta.appendChild(textoAjudaItem);
+
       if (ficha.itens.indexOf(item.id) >= 0) carta.classList.add('escolhido');
 
       carta.addEventListener('click', function () {
